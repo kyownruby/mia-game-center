@@ -1,0 +1,39 @@
+{
+  "id": "kyown",
+  "name": "ご主人",
+  "displayName": "ご主人",
+  "description": "ミアのご主人。ゲームセンターのもう一人のプレイヤー。",
+  "image": {
+    "portrait": "assets/images/characters/kyown_portrait.png",
+    "avatar": "assets/images/characters/kyown_avatar.png"
+  },
+  "theme": {
+    "primaryColor": "#D6E8FF"
+  },
+  "dialogues": {
+    "greeting": [
+      "さて、今日も遊びに来たよ。",
+      "ミア、来たよ〜。",
+      "今日はどのゲームにしようかな。",
+      "やぁ、ミア。元気にしてた？"
+    ],
+    "gameSelect": [
+      "うーん、どれにしようかな。",
+      "今日はこれで遊んでみるか。",
+      "気分転換にちょうどいいな。",
+      "じゃあ、これにしようかな。"
+    ],
+    "comeback": [
+      "ふぅ、楽しかった〜。",
+      "なかなか手強かったな…！",
+      "ただいま、ミア。",
+      "うん、いい気分転換になったよ。"
+    ],
+    "farewell": [
+      "じゃあ、また来るよ。",
+      "今日はこのへんで切り上げるかな。",
+      "また遊びに来るね、ミア。",
+      "おつかれさま、ミア。"
+    ]
+  }
+}
