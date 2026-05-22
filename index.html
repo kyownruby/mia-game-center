@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>mia-game-center</title>
+  <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+  <div class="lobby">
+    <header class="lobby-header">
+      <div class="lobby-title">🎮 mia-game-center</div>
+      <button class="header-avatar" id="header-avatar" aria-label="アバター切替">
+        <span class="header-avatar__icon" id="avatar-emoji">👤</span>
+        <span class="header-avatar__name" id="avatar-name">ご主人</span>
+      </button>
+    </header>
+
+    <main class="lobby-main">
+      <div class="mia-stage">
+        <button class="mia-portrait" id="mia-portrait" aria-label="ミア">🐈</button>
+        <div class="message-window" id="message-window">
+          <span id="message-text"></span>
+        </div>
+      </div>
+
+      <div class="game-grid" id="game-grid"></div>
+    </main>
+  </div>
+
+  <div class="modal" id="avatar-modal" role="dialog" aria-label="アバター切替">
+    <div class="modal__inner">
+      <h2 class="modal__title">アバターを選んでね💕</h2>
+      <div class="modal__options">
+        <button class="modal__option" data-select-character="mia">
+          <span class="modal__option-icon">🐈</span>
+          <span class="modal__option-name">ミア</span>
+        </button>
+        <button class="modal__option" data-select-character="kyown">
+          <span class="modal__option-icon">👤</span>
+          <span class="modal__option-name">ご主人</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared/storage.js"></script>
+  <script src="shared/characters.js"></script>
+  <script src="shared/lobby.js"></script>
+</body>
+</html>

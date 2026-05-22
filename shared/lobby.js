@@ -1,0 +1,172 @@
+const GAMES = [
+  { id: 'solitaire', name: 'ソリティア', emoji: '🃏', ready: false },
+  { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', ready: false },
+  { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', ready: false },
+  { id: 'comingsoon', name: 'まだまだ追加予定！', emoji: '＋', ready: false, placeholder: true },
+];
+
+const TYPING_SPEED_MS = 50;
+const AUTO_HIDE_DELAY_MS = 4000;
+
+let mia = null;
+let kyown = null;
+let selectedId = 'kyown';
+
+const messageWindow = {
+  el: null,
+  textEl: null,
+  hideTimer: null,
+  typingTimer: null,
+  isTyping: false,
+  fullText: '',
+
+  init() {
+    this.el = document.getElementById('message-window');
+    this.textEl = document.getElementById('message-text');
+    this.el.addEventListener('click', () => this.skipTyping());
+  },
+
+  show(text) {
+    if (!text) return;
+    this.cancelTimers();
+    this.fullText = text;
+    this.textEl.textContent = '';
+    this.el.classList.add('is-visible');
+    this.typeOut();
+  },
+
+  typeOut() {
+    let i = 0;
+    this.isTyping = true;
+    this.typingTimer = setInterval(() => {
+      this.textEl.textContent += this.fullText[i];
+      i++;
+      if (i >= this.fullText.length) {
+        clearInterval(this.typingTimer);
+        this.typingTimer = null;
+        this.isTyping = false;
+        this.scheduleHide();
+      }
+    }, TYPING_SPEED_MS);
+  },
+
+  skipTyping() {
+    if (!this.isTyping) return;
+    clearInterval(this.typingTimer);
+    this.typingTimer = null;
+    this.textEl.textContent = this.fullText;
+    this.isTyping = false;
+    this.scheduleHide();
+  },
+
+  scheduleHide() {
+    this.hideTimer = setTimeout(() => this.hide(), AUTO_HIDE_DELAY_MS);
+  },
+
+  hide() {
+    this.el.classList.remove('is-visible');
+  },
+
+  cancelTimers() {
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
+    if (this.typingTimer) {
+      clearInterval(this.typingTimer);
+      this.typingTimer = null;
+    }
+    this.isTyping = false;
+  },
+};
+
+function renderHeaderAvatar() {
+  const ch = selectedId === 'mia' ? mia : kyown;
+  const emoji = selectedId === 'mia' ? '🐈' : '👤';
+  document.getElementById('avatar-emoji').textContent = emoji;
+  document.getElementById('avatar-name').textContent = ch.displayName;
+  document.documentElement.style.setProperty('--avatar-color', ch.theme.primaryColor);
+}
+
+function openAvatarModal() {
+  document.getElementById('avatar-modal').classList.add('is-visible');
+}
+
+function closeAvatarModal() {
+  document.getElementById('avatar-modal').classList.remove('is-visible');
+}
+
+function selectAvatar(id) {
+  selectedId = id;
+  Storage.set('selectedCharacter', id);
+  renderHeaderAvatar();
+  closeAvatarModal();
+}
+
+function renderGameTiles() {
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = '';
+  GAMES.forEach((game) => {
+    const tile = document.createElement('button');
+    tile.className = 'game-tile' + (game.placeholder ? ' is-placeholder' : '');
+    tile.dataset.gameId = game.id;
+    tile.innerHTML = `
+      <div class="game-tile__thumb">${game.emoji}</div>
+      <div class="game-tile__name">${game.name}</div>
+    `;
+    tile.addEventListener('mouseenter', () => {
+      if (game.placeholder) return;
+      const lines = mia.lines.game_hover?.[game.id];
+      messageWindow.show(Characters.pickRandom(lines));
+    });
+    tile.addEventListener('click', () => {
+      alert(game.placeholder ? '新しいゲーム、お楽しみに〜！' : `${game.name}は準備中だよっ💦`);
+    });
+    grid.appendChild(tile);
+  });
+}
+
+function setupPortraitClick() {
+  document.getElementById('mia-portrait').addEventListener('click', () => {
+    messageWindow.show(Characters.pickRandom(mia.lines.click_idle));
+  });
+}
+
+function setupAvatarSwitcher() {
+  document.getElementById('header-avatar').addEventListener('click', openAvatarModal);
+  document.getElementById('avatar-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'avatar-modal') closeAvatarModal();
+  });
+  document.querySelectorAll('[data-select-character]').forEach((btn) => {
+    btn.addEventListener('click', () => selectAvatar(btn.dataset.selectCharacter));
+  });
+}
+
+function showInitialGreeting() {
+  const isFirst = !Storage.get('firstVisit');
+  const lines = isFirst ? mia.lines.greeting_first : mia.lines.greeting_return;
+  if (isFirst) Storage.set('firstVisit', true);
+  messageWindow.show(Characters.pickRandom(lines));
+}
+
+async function init() {
+  try {
+    [mia, kyown] = await Characters.loadAll(['mia', 'kyown']);
+  } catch (e) {
+    console.error(e);
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<p style="padding:1em;color:#c33">キャラデータ読み込み失敗。HTTPサーバ経由で開いてね💦</p>'
+    );
+    return;
+  }
+  selectedId = Storage.get('selectedCharacter', 'kyown');
+  messageWindow.init();
+  renderHeaderAvatar();
+  renderGameTiles();
+  setupPortraitClick();
+  setupAvatarSwitcher();
+  showInitialGreeting();
+}
+
+document.addEventListener('DOMContentLoaded', init);

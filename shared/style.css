@@ -1,0 +1,297 @@
+/* ============================================
+   mia-game-center 共通スタイル
+   パステル基調 / 角丸 / ふんわり影
+   ============================================ */
+
+:root {
+  --color-pink:        #FFD6E8;
+  --color-pink-deep:   #F7A8C4;
+  --color-cream:       #FFF4D6;
+  --color-milky:       #FDF9F0;
+  --color-text:        #5A4A4F;
+  --color-text-soft:   #8A7A7F;
+  --color-border:      #F2D6D6;
+  --color-shadow:      rgba(247, 168, 196, 0.25);
+  --avatar-color:      #FFF4B8;
+
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --shadow-soft: 0 6px 18px var(--color-shadow);
+  --shadow-pop:  0 10px 24px var(--color-shadow);
+
+  --font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background:
+    radial-gradient(circle at 20% 10%, #FFE9F2 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, #FFF7DC 0%, transparent 45%),
+    var(--color-milky);
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* -------- レイアウト -------- */
+
+.lobby {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 1024px;
+}
+
+/* -------- ヘッダー -------- */
+
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 36px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(6px);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.lobby-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--color-pink-deep);
+  letter-spacing: 0.05em;
+}
+
+.header-avatar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease;
+}
+
+.header-avatar:hover { transform: translateY(-2px); }
+
+.header-avatar__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--avatar-color);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+.header-avatar__name {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/* -------- 中央エリア -------- */
+
+.lobby-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 24px;
+}
+
+.mia-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.mia-portrait {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFE9F2 0%, #FFF4D6 100%);
+  display: grid;
+  place-items: center;
+  font-size: 120px;
+  box-shadow: var(--shadow-pop);
+  border: 4px solid white;
+  transition: transform 0.25s ease;
+}
+
+.mia-portrait:hover { transform: scale(1.03); }
+.mia-portrait:active { transform: scale(0.97); }
+
+/* -------- メッセージウィンドウ -------- */
+
+.message-window {
+  width: 100%;
+  min-height: 80px;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid var(--color-pink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  font-size: 17px;
+  line-height: 1.7;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  position: relative;
+}
+
+.message-window::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border-left: 2px solid var(--color-pink);
+  border-top: 2px solid var(--color-pink);
+}
+
+.message-window.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* -------- ゲームタイル -------- */
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 180px);
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.game-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 180px;
+  height: 180px;
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.game-tile:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-pop);
+}
+
+.game-tile:active { transform: translateY(-2px); }
+
+.game-tile.is-placeholder {
+  background: repeating-linear-gradient(
+    45deg,
+    #FFF7DC,
+    #FFF7DC 12px,
+    #FFE9F2 12px,
+    #FFE9F2 24px
+  );
+  color: var(--color-text-soft);
+}
+
+.game-tile__thumb {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.game-tile__name {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/* -------- アバター切替モーダル -------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(90, 74, 79, 0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal.is-visible { display: flex; }
+
+.modal__inner {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  box-shadow: var(--shadow-pop);
+  text-align: center;
+  min-width: 360px;
+}
+
+.modal__title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 20px;
+  color: var(--color-pink-deep);
+}
+
+.modal__options {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.modal__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  background: var(--color-milky);
+  transition: transform 0.2s ease, background 0.2s ease;
+  min-width: 120px;
+}
+
+.modal__option:hover {
+  transform: translateY(-3px);
+  background: var(--color-pink);
+}
+
+.modal__option-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  background: white;
+}
+
+.modal__option[data-select-character="mia"] .modal__option-icon { background: #FFF4B8; }
+.modal__option[data-select-character="kyown"] .modal__option-icon { background: #FFD6E0; }
+
+.modal__option-name { font-weight: bold; font-size: 15px; }
