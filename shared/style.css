@@ -25,6 +25,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -131,10 +133,10 @@ button {
 }
 
 .mia-portrait {
-  height: 380px;
   padding: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.25s ease;
 }
 
@@ -142,7 +144,7 @@ button {
 .mia-portrait:active { transform: scale(0.97); }
 
 .mia-portrait__img {
-  height: 100%;
+  height: 380px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
