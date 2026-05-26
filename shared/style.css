@@ -94,6 +94,14 @@ button {
   display: grid;
   place-items: center;
   font-size: 22px;
+  overflow: hidden;
+}
+
+.header-avatar__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }
 
 .header-avatar__name {
@@ -123,6 +131,24 @@ button {
 }
 
 .mia-portrait {
+  height: 380px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  transition: transform 0.25s ease;
+}
+
+.mia-portrait:hover { transform: scale(1.03); }
+.mia-portrait:active { transform: scale(0.97); }
+
+.mia-portrait__img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px var(--color-shadow));
+}
+
+.mia-portrait__fallback {
   width: 280px;
   height: 280px;
   border-radius: 50%;
@@ -132,11 +158,7 @@ button {
   font-size: 120px;
   box-shadow: var(--shadow-pop);
   border: 4px solid white;
-  transition: transform 0.25s ease;
 }
-
-.mia-portrait:hover { transform: scale(1.03); }
-.mia-portrait:active { transform: scale(0.97); }
 
 /* -------- メッセージウィンドウ -------- */
 
@@ -289,6 +311,14 @@ button {
   place-items: center;
   font-size: 30px;
   background: white;
+  overflow: hidden;
+}
+
+.modal__option-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }
 
 .modal__option[data-select-character="mia"] .modal__option-icon { background: #FFF4B8; }

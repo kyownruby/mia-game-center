@@ -5,7 +5,7 @@
   "description": "ミアのご主人。ゲームセンターのもう一人のプレイヤー。",
   "image": {
     "portrait": "assets/images/characters/kyown_portrait.png",
-    "avatar": "assets/images/characters/kyown_avatar.png"
+    "avatar": "assets/images/characters/kyown_portrait.png"
   },
   "theme": {
     "primaryColor": "#FFD6E0"

@@ -5,7 +5,7 @@
   "description": "猫耳メイドの受付係。明るく元気で甘えん坊。",
   "image": {
     "portrait": "assets/images/characters/mia_portrait.png",
-    "avatar": "assets/images/characters/mia_avatar.png"
+    "avatar": "assets/images/characters/mia_portrait.png"
   },
   "theme": {
     "primaryColor": "#FFF4B8"

@@ -80,10 +80,25 @@ const messageWindow = {
   },
 };
 
+function applyAvatarImage(imgEl, emojiEl, src) {
+  imgEl.onload = () => {
+    imgEl.hidden = false;
+    emojiEl.hidden = true;
+  };
+  imgEl.onerror = () => {
+    imgEl.hidden = true;
+    emojiEl.hidden = false;
+  };
+  imgEl.src = src;
+}
+
 function renderHeaderAvatar() {
   const ch = selectedId === 'mia' ? mia : kyown;
-  const emoji = selectedId === 'mia' ? '🐈' : '👤';
-  document.getElementById('avatar-emoji').textContent = emoji;
+  applyAvatarImage(
+    document.getElementById('avatar-img'),
+    document.getElementById('avatar-emoji'),
+    ch.image.avatar
+  );
   document.getElementById('avatar-name').textContent = ch.displayName;
   document.documentElement.style.setProperty('--avatar-color', ch.theme.primaryColor);
 }
@@ -126,6 +141,27 @@ function renderGameTiles() {
   });
 }
 
+function renderMiaPortrait() {
+  applyAvatarImage(
+    document.getElementById('mia-portrait-img'),
+    document.getElementById('mia-portrait-fallback'),
+    mia.image.portrait
+  );
+}
+
+function renderModalAvatars() {
+  applyAvatarImage(
+    document.getElementById('modal-img-mia'),
+    document.getElementById('modal-emoji-mia'),
+    mia.image.avatar
+  );
+  applyAvatarImage(
+    document.getElementById('modal-img-kyown'),
+    document.getElementById('modal-emoji-kyown'),
+    kyown.image.avatar
+  );
+}
+
 function setupPortraitClick() {
   document.getElementById('mia-portrait').addEventListener('click', () => {
     messageWindow.show(Characters.pickRandom(mia.lines.click_idle));
@@ -162,6 +198,8 @@ async function init() {
   }
   selectedId = Storage.get('selectedCharacter', 'kyown');
   messageWindow.init();
+  renderMiaPortrait();
+  renderModalAvatars();
   renderHeaderAvatar();
   renderGameTiles();
   setupPortraitClick();
