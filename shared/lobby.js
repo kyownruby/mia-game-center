@@ -8,11 +8,14 @@ const GAMES = [
 const TYPING_SPEED_MS = 50;
 const AUTO_HIDE_DELAY_MS = 4000;
 
-const SPEAKER_ID = 'mia';                       // ロビーで話すのは常にミア
 const SELECTABLE = ['mia', 'kyown', 'rain'];    // アバターとして選べるキャラ
 
 const chars = {};
-let selectedId = 'kyown';
+let selectedId = 'mia';
+
+function speaker() {
+  return chars[selectedId];   // ロビーの主役＝選択中アバター
+}
 
 const messageWindow = {
   el: null,
@@ -115,7 +118,9 @@ function selectAvatar(id) {
   selectedId = id;
   Storage.set('selectedCharacter', id);
   renderHeaderAvatar();
+  renderSpeakerPortrait();
   closeAvatarModal();
+  messageWindow.show(Characters.pickRandom(speaker().lines.greeting_return));
 }
 
 function renderGameTiles() {
@@ -131,7 +136,7 @@ function renderGameTiles() {
     `;
     tile.addEventListener('mouseenter', () => {
       if (game.placeholder) return;
-      const lines = chars[SPEAKER_ID].lines.game_hover?.[game.id];
+      const lines = speaker().lines.game_hover?.[game.id];
       messageWindow.show(Characters.pickRandom(lines));
     });
     tile.addEventListener('click', () => {
@@ -142,10 +147,13 @@ function renderGameTiles() {
 }
 
 function renderSpeakerPortrait() {
+  const ch = speaker();
+  const fallbackEl = document.getElementById('mia-portrait-fallback');
+  fallbackEl.textContent = ch.emoji;
   applyAvatarImage(
     document.getElementById('mia-portrait-img'),
-    document.getElementById('mia-portrait-fallback'),
-    chars[SPEAKER_ID].image.portrait
+    fallbackEl,
+    ch.image.portrait
   );
 }
 
@@ -181,7 +189,7 @@ function renderModalOptions() {
 
 function setupPortraitClick() {
   document.getElementById('mia-portrait').addEventListener('click', () => {
-    messageWindow.show(Characters.pickRandom(chars[SPEAKER_ID].lines.click_idle));
+    messageWindow.show(Characters.pickRandom(speaker().lines.click_idle));
   });
 }
 
@@ -193,9 +201,9 @@ function setupAvatarSwitcher() {
 }
 
 function showInitialGreeting() {
-  const speaker = chars[SPEAKER_ID];
+  const ch = speaker();
   const isFirst = !Storage.get('firstVisit');
-  const lines = isFirst ? speaker.lines.greeting_first : speaker.lines.greeting_return;
+  const lines = isFirst ? ch.lines.greeting_first : ch.lines.greeting_return;
   if (isFirst) Storage.set('firstVisit', true);
   messageWindow.show(Characters.pickRandom(lines));
 }
@@ -212,8 +220,8 @@ async function init() {
     );
     return;
   }
-  selectedId = Storage.get('selectedCharacter', 'kyown');
-  if (!chars[selectedId]) selectedId = 'kyown';
+  selectedId = Storage.get('selectedCharacter', 'mia');
+  if (!chars[selectedId]) selectedId = 'mia';
   messageWindow.init();
   renderSpeakerPortrait();
   renderModalOptions();
