@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>マインスイーパー｜ミアの遊び場</title>
+  <link rel="stylesheet" href="../../shared/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ms">
+    <header class="ms-header">
+      <div class="ms-header__buttons">
+        <button class="pill-btn" id="btn-new">新規ゲーム</button>
+        <a class="pill-btn" href="../../index.html">ロビーへ</a>
+      </div>
+      <div class="ms-header__stats">
+        <span class="stat">💣 <strong id="mines-left">0</strong></span>
+        <span class="stat">⏱ <strong id="timer">0:00</strong></span>
+      </div>
+    </header>
+
+    <main class="ms-board-wrap">
+      <div class="ms-board" id="board"></div>
+    </main>
+
+    <div class="sol-char">
+      <button class="sol-char__portrait" id="char-portrait" aria-label="キャラ">
+        <img id="char-img" alt="" hidden>
+        <span id="char-fallback">🐈</span>
+      </button>
+      <div class="message-window" id="message-window"><span id="message-text"></span></div>
+    </div>
+  </div>
+
+  <!-- 新規ゲームモーダル -->
+  <div class="modal" id="new-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title">新しいゲーム💣</h2>
+      <p class="ms-modal__label">難易度を選んでね</p>
+      <div class="ms-choice" id="choice-difficulty">
+        <button class="ms-opt" data-difficulty="beginner">初級<small>9×9 / 10</small></button>
+        <button class="ms-opt" data-difficulty="intermediate">中級<small>16×16 / 40</small></button>
+        <button class="ms-opt" data-difficulty="expert">上級<small>30×16 / 99</small></button>
+      </div>
+      <p class="ms-modal__label">モードを選んでね</p>
+      <div class="ms-choice" id="choice-mode">
+        <button class="ms-opt" data-mode="safe">セーフ<small>最初は安全</small></button>
+        <button class="ms-opt" data-mode="hardcore">ハードコア<small>完全ランダム</small></button>
+      </div>
+      <div class="ms-modal__actions">
+        <button class="pill-btn pill-btn--accent" id="btn-start">開始</button>
+        <button class="pill-btn" id="btn-cancel">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- リザルトモーダル -->
+  <div class="modal" id="result-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title" id="result-title"></h2>
+      <div class="result-rows" id="result-rows"></div>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="btn-again">もう一度遊ぶ</button>
+        <button class="pill-btn" id="btn-change">難易度を変える</button>
+        <a class="pill-btn" href="../../index.html">ロビーに戻る</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../shared/storage.js"></script>
+  <script src="../../shared/characters.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
