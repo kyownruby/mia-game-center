@@ -1,7 +1,7 @@
 const GAMES = [
-  { id: 'solitaire', name: 'ソリティア', emoji: '🃏', ready: false },
-  { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', ready: false },
-  { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', ready: false },
+  { id: 'solitaire', name: 'ソリティア', emoji: '🃏', icon: 'assets/icons/games/solitaire.png', ready: false },
+  { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', icon: 'assets/icons/games/minesweeper.png', ready: false },
+  { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', icon: 'assets/icons/games/breakout.png', ready: false },
   { id: 'comingsoon', name: 'まだまだ追加予定！', emoji: '＋', ready: false, placeholder: true },
 ];
 
@@ -130,10 +130,25 @@ function renderGameTiles() {
     const tile = document.createElement('button');
     tile.className = 'game-tile' + (game.placeholder ? ' is-placeholder' : '');
     tile.dataset.gameId = game.id;
-    tile.innerHTML = `
-      <div class="game-tile__thumb">${game.emoji}</div>
-      <div class="game-tile__name">${game.name}</div>
-    `;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'game-tile__thumb';
+    if (game.icon) {
+      const img = document.createElement('img');
+      img.alt = game.name;
+      const emoji = document.createElement('span');
+      emoji.textContent = game.emoji;
+      thumb.append(img, emoji);
+      applyAvatarImage(img, emoji, game.icon);
+    } else {
+      thumb.textContent = game.emoji;
+    }
+
+    const name = document.createElement('div');
+    name.className = 'game-tile__name';
+    name.textContent = game.name;
+
+    tile.append(thumb, name);
     tile.addEventListener('mouseenter', () => {
       if (game.placeholder) return;
       const lines = speaker().lines.game_hover?.[game.id];

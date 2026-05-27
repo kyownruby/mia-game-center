@@ -246,6 +246,17 @@ button {
 .game-tile__thumb {
   font-size: 64px;
   line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+}
+
+.game-tile__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-md);
 }
 
 .game-tile__name {
