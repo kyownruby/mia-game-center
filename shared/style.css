@@ -324,7 +324,4 @@ button {
   object-position: top center;
 }
 
-.modal__option[data-select-character="mia"] .modal__option-icon { background: #FFF4B8; }
-.modal__option[data-select-character="kyown"] .modal__option-icon { background: #FFD6E0; }
-
 .modal__option-name { font-weight: bold; font-size: 15px; }

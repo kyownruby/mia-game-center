@@ -8,8 +8,10 @@ const GAMES = [
 const TYPING_SPEED_MS = 50;
 const AUTO_HIDE_DELAY_MS = 4000;
 
-let mia = null;
-let kyown = null;
+const SPEAKER_ID = 'mia';                       // ロビーで話すのは常にミア
+const SELECTABLE = ['mia', 'kyown', 'rain'];    // アバターとして選べるキャラ
+
+const chars = {};
 let selectedId = 'kyown';
 
 const messageWindow = {
@@ -93,12 +95,10 @@ function applyAvatarImage(imgEl, emojiEl, src) {
 }
 
 function renderHeaderAvatar() {
-  const ch = selectedId === 'mia' ? mia : kyown;
-  applyAvatarImage(
-    document.getElementById('avatar-img'),
-    document.getElementById('avatar-emoji'),
-    ch.image.avatar
-  );
+  const ch = chars[selectedId];
+  const emojiEl = document.getElementById('avatar-emoji');
+  emojiEl.textContent = ch.emoji;
+  applyAvatarImage(document.getElementById('avatar-img'), emojiEl, ch.image.avatar);
   document.getElementById('avatar-name').textContent = ch.displayName;
   document.documentElement.style.setProperty('--avatar-color', ch.theme.primaryColor);
 }
@@ -131,7 +131,7 @@ function renderGameTiles() {
     `;
     tile.addEventListener('mouseenter', () => {
       if (game.placeholder) return;
-      const lines = mia.lines.game_hover?.[game.id];
+      const lines = chars[SPEAKER_ID].lines.game_hover?.[game.id];
       messageWindow.show(Characters.pickRandom(lines));
     });
     tile.addEventListener('click', () => {
@@ -141,30 +141,47 @@ function renderGameTiles() {
   });
 }
 
-function renderMiaPortrait() {
+function renderSpeakerPortrait() {
   applyAvatarImage(
     document.getElementById('mia-portrait-img'),
     document.getElementById('mia-portrait-fallback'),
-    mia.image.portrait
+    chars[SPEAKER_ID].image.portrait
   );
 }
 
-function renderModalAvatars() {
-  applyAvatarImage(
-    document.getElementById('modal-img-mia'),
-    document.getElementById('modal-emoji-mia'),
-    mia.image.avatar
-  );
-  applyAvatarImage(
-    document.getElementById('modal-img-kyown'),
-    document.getElementById('modal-emoji-kyown'),
-    kyown.image.avatar
-  );
+function renderModalOptions() {
+  const container = document.getElementById('modal-options');
+  container.innerHTML = '';
+  SELECTABLE.forEach((id) => {
+    const ch = chars[id];
+    const btn = document.createElement('button');
+    btn.className = 'modal__option';
+    btn.dataset.selectCharacter = id;
+    btn.addEventListener('click', () => selectAvatar(id));
+
+    const icon = document.createElement('span');
+    icon.className = 'modal__option-icon';
+    icon.style.background = ch.theme.primaryColor;
+    const img = document.createElement('img');
+    img.alt = '';
+    img.hidden = true;
+    const emoji = document.createElement('span');
+    emoji.textContent = ch.emoji;
+    icon.append(img, emoji);
+
+    const name = document.createElement('span');
+    name.className = 'modal__option-name';
+    name.textContent = ch.displayName;
+
+    btn.append(icon, name);
+    container.appendChild(btn);
+    applyAvatarImage(img, emoji, ch.image.avatar);
+  });
 }
 
 function setupPortraitClick() {
   document.getElementById('mia-portrait').addEventListener('click', () => {
-    messageWindow.show(Characters.pickRandom(mia.lines.click_idle));
+    messageWindow.show(Characters.pickRandom(chars[SPEAKER_ID].lines.click_idle));
   });
 }
 
@@ -173,21 +190,20 @@ function setupAvatarSwitcher() {
   document.getElementById('avatar-modal').addEventListener('click', (e) => {
     if (e.target.id === 'avatar-modal') closeAvatarModal();
   });
-  document.querySelectorAll('[data-select-character]').forEach((btn) => {
-    btn.addEventListener('click', () => selectAvatar(btn.dataset.selectCharacter));
-  });
 }
 
 function showInitialGreeting() {
+  const speaker = chars[SPEAKER_ID];
   const isFirst = !Storage.get('firstVisit');
-  const lines = isFirst ? mia.lines.greeting_first : mia.lines.greeting_return;
+  const lines = isFirst ? speaker.lines.greeting_first : speaker.lines.greeting_return;
   if (isFirst) Storage.set('firstVisit', true);
   messageWindow.show(Characters.pickRandom(lines));
 }
 
 async function init() {
   try {
-    [mia, kyown] = await Characters.loadAll(['mia', 'kyown']);
+    const loaded = await Characters.loadAll(SELECTABLE);
+    loaded.forEach((ch) => { chars[ch.id] = ch; });
   } catch (e) {
     console.error(e);
     document.body.insertAdjacentHTML(
@@ -197,9 +213,10 @@ async function init() {
     return;
   }
   selectedId = Storage.get('selectedCharacter', 'kyown');
+  if (!chars[selectedId]) selectedId = 'kyown';
   messageWindow.init();
-  renderMiaPortrait();
-  renderModalAvatars();
+  renderSpeakerPortrait();
+  renderModalOptions();
   renderHeaderAvatar();
   renderGameTiles();
   setupPortraitClick();
