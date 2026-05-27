@@ -329,18 +329,18 @@ function findHint() {
   for (const o of tops) {
     if (canToFoundation(o.card)) return { src: o.src, card: o.card, dest: { type: 'foundation', key: o.card.suit } };
   }
-  // 2) 場札 → 場札（裏向きを表に出せる手を優先）
+  // 2) 場札 → 場札（裏向きカードを表に出せる手のみ提案。位置替えだけの無意味な手は除外）
   for (let col = 0; col < 7; col++) {
     const t = state.tableau[col];
     const idx = t.findIndex((c) => c.faceUp);
     if (idx === -1) continue;
     const run = t.slice(idx);
     if (!isValidRun(run)) continue;
+    const reveals = idx > 0 && !t[idx - 1].faceUp;   // 移動で裏向きカードが表になる
+    if (!reveals) continue;
     for (let d = 0; d < 7; d++) {
-      if (d === col) continue;
-      if (canToTableau(run[0], d)) {
-        const reveals = idx > 0 && !t[idx - 1].faceUp;
-        if (reveals || run[0].rank === 13) return { src: { type: 'tableau', key: col, index: idx }, card: run[0], dest: { type: 'tableau', col: d } };
+      if (d !== col && canToTableau(run[0], d)) {
+        return { src: { type: 'tableau', key: col, index: idx }, card: run[0], dest: { type: 'tableau', col: d } };
       }
     }
   }
