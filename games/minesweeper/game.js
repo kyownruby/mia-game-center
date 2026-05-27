@@ -266,9 +266,7 @@ function showResult(win) {
 
   add(win ? 'クリアタイム' : '経過タイム', fmtTime(state.elapsed), false);
   if (win) add('最速タイム', rec.fastestTime != null ? fmtTime(rec.fastestTime * 1000) : '-', state._isFastest);
-  add('累計プレイ', rec.totalPlays, false);
   add('クリア回数', rec.totalWins, false);
-  add('勝率', rec.winRate + '%', false);
 
   document.getElementById('result-modal').classList.add('is-visible');
 }
