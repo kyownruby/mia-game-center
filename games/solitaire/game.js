@@ -26,6 +26,7 @@ const state = {
   elapsed: 0,
   history: [],
   won: false,
+  lost: false,
 };
 
 let timerId = null;
@@ -111,6 +112,7 @@ function deal() {
   state.score = 0;
   state.history = [];
   state.won = false;
+  state.lost = false;
 }
 
 /* ---------------- 状態スナップショット（Undo） ---------------- */
@@ -186,6 +188,7 @@ function removeFromSource(src) {
 
 /* 移動を試みる。成功でtrue */
 function tryMove(src, dest) {
+  if (state.won || state.lost) return false;
   const cards = movingCards(src);
   if (!cards.length) return false;
 
@@ -226,11 +229,13 @@ function tryMove(src, dest) {
   if (dest.type === 'foundation') say('foundation_move');
   render();
   checkWin();
+  checkStuck();
   return true;
 }
 
 /* カードを自動で組札へ（ダブルクリック） */
 function autoToFoundation(id) {
+  if (state.won || state.lost) return;
   const src = locate(id);
   if (!src || !src.movable) return;
   const cards = movingCards(src);
@@ -240,6 +245,7 @@ function autoToFoundation(id) {
 
 /* ---------------- 山札めくり ---------------- */
 function drawFromStock() {
+  if (state.won || state.lost) return;
   if (state.stock.length === 0) {
     if (state.waste.length === 0) return;
     snapshot();
@@ -252,6 +258,62 @@ function drawFromStock() {
   selection = null;
   resetIdle();
   render();
+  checkStuck();
+}
+
+/* ---------------- 詰み判定 ---------------- */
+function hasPlacement() {
+  // 場札の一番上 → 組札
+  for (let col = 0; col < 7; col++) {
+    const t = state.tableau[col];
+    if (t.length && t[t.length - 1].faceUp && canToFoundation(t[t.length - 1])) return true;
+  }
+  // 場札の有効な連なり → 別の列
+  for (let col = 0; col < 7; col++) {
+    const t = state.tableau[col];
+    for (let idx = 0; idx < t.length; idx++) {
+      if (!t[idx].faceUp) continue;
+      const run = t.slice(idx);
+      if (!isValidRun(run)) continue;
+      for (let d = 0; d < 7; d++) {
+        if (d !== col && canToTableau(run[0], d)) return true;
+      }
+      break; // この列で最上位の表向きカードだけ調べれば十分
+    }
+  }
+  // めくり札の各カード（山札を循環すれば到達可能）→ 組札 or 場札
+  for (const card of state.waste) {
+    if (canToFoundation(card)) return true;
+    for (let d = 0; d < 7; d++) if (canToTableau(card, d)) return true;
+  }
+  return false;
+}
+
+function checkStuck() {
+  if (state.won || state.lost) return;
+  if (state.stock.length !== 0) return;   // 山札を一周し終えてから判定
+  if (hasPlacement()) return;
+  state.lost = true;
+  stopTimer();
+  say('stuck');
+  setTimeout(showStuckResult, 700);
+}
+
+function showStuckResult() {
+  const rows = document.getElementById('result-rows');
+  rows.innerHTML = '';
+  const add = (label, value) => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `<span>${label}</span><span><strong>${value}</strong></span>`;
+    rows.appendChild(row);
+  };
+  add('今回のスコア', state.score);
+  add('経過タイム', fmtTime(state.elapsed));
+  const stuckLines = charData.lines.solitaire.stuck;
+  document.getElementById('result-title').textContent =
+    (stuckLines && stuckLines[0]) || 'うーん、詰みかも…💦';
+  document.getElementById('result-modal').classList.add('is-visible');
 }
 
 /* ---------------- ヒント ---------------- */
@@ -290,6 +352,7 @@ function findHint() {
 }
 
 function showHint() {
+  if (state.won || state.lost) return;
   say('hint');
   const hint = findHint();
   if (!hint) { say('stuck'); return; }
@@ -311,7 +374,7 @@ function allTableauFaceUp() {
   return state.tableau.every((col) => col.every((c) => c.faceUp));
 }
 function autoAvailable() {
-  return !state.won && allTableauFaceUp() &&
+  return !state.won && !state.lost && allTableauFaceUp() &&
     (state.stock.length > 0 || state.waste.length > 0 || state.tableau.some((c) => c.length > 0));
 }
 function startAutoComplete() {
@@ -539,7 +602,7 @@ function finishDrag() {
 }
 
 function onPointerDown(e) {
-  if (drag) return; // 多重ドラッグ防止
+  if (drag || state.won || state.lost) return; // 多重ドラッグ・終了後を防止
   const cardEl = e.target.closest('.card');
   if (!cardEl || !cardEl.classList.contains('is-draggable')) return;
   const id = cardEl.dataset.id;
