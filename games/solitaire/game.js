@@ -424,6 +424,7 @@ function makeCardEl(card) {
 }
 
 function render() {
+  clearDragLayer(); // 取り残された浮遊カードの掃除（保険）
   // 山札
   const stockEl = document.getElementById('stock');
   stockEl.innerHTML = '';
@@ -523,26 +524,41 @@ function tryMoveToPile(destPile) {
 
 /* ---------------- ドラッグ&ドロップ ---------------- */
 let drag = null;
+
+function clearDragLayer() {
+  const dl = document.getElementById('drag-layer');
+  if (dl) dl.remove();
+}
+
+function finishDrag() {
+  window.removeEventListener('pointermove', onPointerMove);
+  window.removeEventListener('pointerup', onPointerUp);
+  window.removeEventListener('pointercancel', onPointerCancel);
+  clearDragLayer();
+}
+
 function onPointerDown(e) {
+  if (drag) return; // 多重ドラッグ防止
   const cardEl = e.target.closest('.card');
-  if (cardEl && cardEl.classList.contains('is-draggable')) {
-    const id = cardEl.dataset.id;
-    const loc = locate(id);
-    if (!loc || !loc.movable) return;
-    const cards = movingCards(loc);
-    const rect = cardEl.getBoundingClientRect();
-    drag = {
-      src: { type: loc.type, key: loc.key, index: loc.index },
-      cards, startX: e.clientX, startY: e.clientY,
-      offX: e.clientX - rect.left, offY: e.clientY - rect.top,
-      moved: false, layer: null, id,
-    };
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-  }
+  if (!cardEl || !cardEl.classList.contains('is-draggable')) return;
+  const id = cardEl.dataset.id;
+  const loc = locate(id);
+  if (!loc || !loc.movable) return;
+  const cards = movingCards(loc);
+  const rect = cardEl.getBoundingClientRect();
+  drag = {
+    src: { type: loc.type, key: loc.key, index: loc.index },
+    cards, startX: e.clientX, startY: e.clientY,
+    offX: e.clientX - rect.left, offY: e.clientY - rect.top,
+    moved: false, id,
+  };
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerCancel);
 }
 
 function beginDragLayer() {
+  clearDragLayer(); // 念のため古い残骸を除去
   const layer = document.createElement('div');
   layer.id = 'drag-layer';
   let top = 0;
@@ -569,17 +585,25 @@ function onPointerMove(e) {
   drag.layer.style.transform = `translate(${e.clientX - drag.offX}px, ${e.clientY - drag.offY}px)`;
 }
 
+function onPointerCancel() {
+  if (!drag) { finishDrag(); return; }
+  drag = null;
+  finishDrag();
+  render();
+}
+
 function onPointerUp(e) {
-  window.removeEventListener('pointermove', onPointerMove);
-  window.removeEventListener('pointerup', onPointerUp);
-  if (!drag) return;
+  if (!drag) { finishDrag(); return; }
   const d = drag;
   drag = null;
-  if (!d.moved) { handleCardClick(d.id, document.querySelector(`.card[data-id="${d.id}"]`) || e.target); return; }
-  if (d.layer) d.layer.remove();
+  finishDrag(); // リスナー解除＋浮遊カード除去
 
-  // ドロップ先判定
-  const stackTop = d.cards.length ? d.cards[0] : null;
+  if (!d.moved) {
+    handleCardClick(d.id, document.querySelector(`.card[data-id="${d.id}"]`) || e.target);
+    return;
+  }
+
+  // ドロップ先判定（浮遊カードは既に除去済み）
   const els = document.elementsFromPoint(e.clientX, e.clientY);
   let destPile = null;
   for (const el of els) {
