@@ -4,10 +4,11 @@
  */
 const Characters = (() => {
   const cache = {};
+  const ASSET_V = '1'; // キャッシュ対策バージョン（更新時に上げる）
 
   async function load(id, basePath = 'characters/') {
     if (cache[id]) return cache[id];
-    const res = await fetch(`${basePath}${id}.json`);
+    const res = await fetch(`${basePath}${id}.json?v=${ASSET_V}`);
     if (!res.ok) throw new Error(`Failed to load character: ${id}`);
     const data = await res.json();
     cache[id] = data;
