@@ -77,6 +77,7 @@ function renderChar() {
   const img = document.getElementById('char-img');
   const fb = document.getElementById('char-fallback');
   fb.textContent = charData.emoji || '🐈';
+  fb.hidden = true; // 失敗時のみ表示（FOUC防止）
   img.onload = () => { img.hidden = false; fb.hidden = true; };
   img.onerror = () => { img.hidden = true; fb.hidden = false; };
   img.src = ROOT + charData.image.portrait;

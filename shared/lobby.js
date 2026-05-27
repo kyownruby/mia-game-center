@@ -86,6 +86,7 @@ const messageWindow = {
 };
 
 function applyAvatarImage(imgEl, emojiEl, src) {
+  emojiEl.hidden = true; // 既定で隠し、画像読み込み失敗時のみ表示（FOUC防止）
   imgEl.onload = () => {
     imgEl.hidden = false;
     emojiEl.hidden = true;
