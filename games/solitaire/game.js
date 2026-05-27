@@ -32,6 +32,7 @@ const state = {
 let timerId = null;
 let idleId = null;
 let autoId = null;
+let autoRunning = false;   // 自動完成中はセリフ連打を抑制
 let selection = null;     // {type, key, index}
 let charData = null;
 let selectedId = 'mia';
@@ -226,7 +227,7 @@ function tryMove(src, dest) {
   selection = null;
   resetIdle();
 
-  if (dest.type === 'foundation') say('foundation_move');
+  if (dest.type === 'foundation' && !autoRunning) say('foundation_move');
   render();
   checkWin();
   checkStuck();
@@ -377,8 +378,13 @@ function autoAvailable() {
   return !state.won && !state.lost && allTableauFaceUp() &&
     (state.stock.length > 0 || state.waste.length > 0 || state.tableau.some((c) => c.length > 0));
 }
+function stopAuto() {
+  if (autoId) { clearInterval(autoId); autoId = null; }
+  autoRunning = false;
+}
 function startAutoComplete() {
   if (autoId) return;
+  autoRunning = true;
   say('auto_complete');
   let guard = 0;
   autoId = setInterval(() => {
@@ -394,11 +400,11 @@ function startAutoComplete() {
     // 直接動かせない → 山札/めくり札を循環させて掘り出す
     if (state.stock.length > 0 || state.waste.length > 0) {
       guard++;
-      if (guard > state.stock.length + state.waste.length + 2) { clearInterval(autoId); autoId = null; return; }
+      if (guard > state.stock.length + state.waste.length + 2) { stopAuto(); return; }
       drawFromStock();
       return;
     }
-    clearInterval(autoId); autoId = null;
+    stopAuto();
   }, 140);
 }
 
@@ -406,7 +412,7 @@ function startAutoComplete() {
 function checkWin() {
   if (SUITS.every((s) => state.foundations[s].length === 13)) {
     state.won = true;
-    if (autoId) { clearInterval(autoId); autoId = null; }
+    stopAuto();
     stopTimer();
     say('clear');
     setTimeout(showResult, 700);
