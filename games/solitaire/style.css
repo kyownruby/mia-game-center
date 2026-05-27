@@ -1,0 +1,240 @@
+/* ============================================
+   ソリティア専用スタイル
+   ============================================ */
+
+:root {
+  --card-w: 92px;
+  --card-h: 128px;
+  --stack-up: 30px;     /* 表向きカードの重なり間隔 */
+  --stack-down: 14px;   /* 裏向きカードの重なり間隔 */
+  --card-red: #E8607A;
+  --card-black: #5A4A4F;
+}
+
+.sol {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 1024px;
+}
+
+/* -------- ヘッダー -------- */
+
+.sol-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 28px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  border-bottom: 2px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.sol-header__buttons { display: flex; gap: 10px; align-items: center; }
+.sol-header__stats { display: flex; gap: 20px; font-size: 16px; }
+.stat strong { color: var(--color-pink-deep); font-size: 18px; margin-left: 4px; }
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: var(--shadow-soft);
+  font-weight: bold;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--color-text);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.pill-btn:hover { transform: translateY(-2px); }
+.pill-btn:active { transform: translateY(0); }
+.pill-btn--accent { background: var(--color-pink); color: var(--color-pink-deep); }
+.pill-btn[disabled] { opacity: 0.45; pointer-events: none; }
+
+/* -------- 盤面 -------- */
+
+.sol-board {
+  flex: 1;
+  padding: 28px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.sol-top {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.sol-foundations { display: flex; gap: 16px; margin-left: auto; }
+
+.sol-tableau {
+  display: grid;
+  grid-template-columns: repeat(7, var(--card-w));
+  gap: 24px;
+}
+
+/* -------- パイル（置き場） -------- */
+
+.pile {
+  width: var(--card-w);
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+.pile--stock, .pile--waste, .pile--foundation { height: var(--card-h); }
+
+/* 空のスロット表示 */
+.pile--stock::before,
+.pile--foundation::before,
+.tableau-col::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.35);
+}
+.pile--foundation { }
+.pile--foundation[data-suit]::after {
+  content: attr(data-symbol);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  color: rgba(90, 74, 79, 0.18);
+  pointer-events: none;
+}
+
+.pile--waste { width: calc(var(--card-w) + 2 * var(--stack-up)); }
+
+.tableau-col {
+  position: relative;
+  width: var(--card-w);
+  min-height: var(--card-h);
+}
+
+/* -------- カード -------- */
+
+.card {
+  width: var(--card-w);
+  height: var(--card-h);
+  border-radius: var(--radius-sm);
+  background: white;
+  box-shadow: 0 3px 8px rgba(90, 74, 79, 0.18);
+  position: absolute;
+  left: 0;
+  top: 0;
+  user-select: none;
+  border: 1.5px solid #F0E6E6;
+  box-sizing: border-box;
+}
+
+.card.is-red { color: var(--card-red); }
+.card.is-black { color: var(--card-black); }
+
+.card__corner {
+  position: absolute;
+  font-weight: bold;
+  font-size: 17px;
+  line-height: 1;
+  text-align: center;
+}
+.card__corner--tl { top: 7px; left: 8px; }
+.card__corner--br { bottom: 7px; right: 8px; transform: rotate(180deg); }
+.card__corner .suit { display: block; font-size: 15px; }
+
+.card__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+}
+
+.card.is-down {
+  background:
+    repeating-linear-gradient(45deg, #FFD6E8, #FFD6E8 7px, #FFC2DD 7px, #FFC2DD 14px);
+  border-color: #F7A8C4;
+}
+.card.is-down .card__corner, .card.is-down .card__center { display: none; }
+
+.card.is-draggable { cursor: grab; }
+.card.is-selected { outline: 3px solid var(--color-pink-deep); outline-offset: 1px; }
+.card.is-hint-src { animation: hintPulse 0.7s ease-in-out infinite alternate; }
+.pile.is-hint-dst, .tableau-col.is-hint-dst {
+  box-shadow: 0 0 0 3px var(--color-pink-deep);
+  border-radius: var(--radius-sm);
+}
+
+@keyframes hintPulse {
+  from { box-shadow: 0 3px 8px rgba(90,74,79,0.18); }
+  to   { box-shadow: 0 0 0 4px var(--color-pink-deep), 0 3px 8px rgba(90,74,79,0.18); }
+}
+
+/* ドラッグ中の浮遊レイヤー */
+#drag-layer {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* -------- キャラエリア -------- */
+
+.sol-char {
+  position: fixed;
+  right: 28px;
+  bottom: 20px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 15;
+  pointer-events: none;
+}
+.sol-char .message-window { pointer-events: auto; width: 100%; }
+
+.sol-char__portrait {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.sol-char__portrait img {
+  height: 240px;
+  width: auto;
+  filter: drop-shadow(0 8px 14px var(--color-shadow));
+}
+.sol-char__portrait #char-fallback {
+  font-size: 90px;
+}
+
+/* -------- リザルト行 -------- */
+
+.result-rows { margin: 4px 0 20px; text-align: left; }
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 4px;
+  font-size: 16px;
+  border-bottom: 1px dashed var(--color-border);
+}
+.result-row.is-best strong { color: var(--color-pink-deep); }
+.result-row .badge {
+  font-size: 12px;
+  background: var(--color-pink);
+  color: var(--color-pink-deep);
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 6px;
+}

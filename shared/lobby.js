@@ -1,5 +1,5 @@
 const GAMES = [
-  { id: 'solitaire', name: 'ソリティア', emoji: '🃏', icon: 'assets/icons/games/solitaire.png', ready: false },
+  { id: 'solitaire', name: 'ソリティア', emoji: '🃏', icon: 'assets/icons/games/solitaire.png', url: 'games/solitaire/index.html', ready: true },
   { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', icon: 'assets/icons/games/minesweeper.png', ready: false },
   { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', icon: 'assets/icons/games/breakout.png', ready: false },
   { id: 'comingsoon', name: 'まだまだ追加予定！', emoji: '＋', ready: false, placeholder: true },
@@ -155,6 +155,7 @@ function renderGameTiles() {
       messageWindow.show(Characters.pickRandom(lines));
     });
     tile.addEventListener('click', () => {
+      if (game.ready && game.url) { window.location.href = game.url; return; }
       alert(game.placeholder ? '新しいゲーム、お楽しみに〜！' : `${game.name}は準備中だよっ💦`);
     });
     grid.appendChild(tile);

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ソリティア｜ミアの遊び場</title>
+  <link rel="stylesheet" href="../../shared/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="sol">
+    <header class="sol-header">
+      <div class="sol-header__buttons">
+        <button class="pill-btn" id="btn-new">新規ゲーム</button>
+        <button class="pill-btn" id="btn-undo">Undo</button>
+        <button class="pill-btn" id="btn-hint">ヒント</button>
+        <button class="pill-btn pill-btn--accent" id="btn-auto" hidden>自動完成</button>
+        <a class="pill-btn" href="../../index.html">ロビーへ</a>
+      </div>
+      <div class="sol-header__stats">
+        <span class="stat">スコア <strong id="score">0</strong></span>
+        <span class="stat">⏱ <strong id="timer">0:00</strong></span>
+      </div>
+    </header>
+
+    <main class="sol-board" id="board">
+      <div class="sol-top">
+        <div class="pile pile--stock" id="stock" data-pile="stock"></div>
+        <div class="pile pile--waste" id="waste" data-pile="waste"></div>
+        <div class="sol-foundations">
+          <div class="pile pile--foundation" data-pile="foundation" data-suit="S"></div>
+          <div class="pile pile--foundation" data-pile="foundation" data-suit="H"></div>
+          <div class="pile pile--foundation" data-pile="foundation" data-suit="D"></div>
+          <div class="pile pile--foundation" data-pile="foundation" data-suit="C"></div>
+        </div>
+      </div>
+      <div class="sol-tableau" id="tableau"></div>
+    </main>
+
+    <div class="sol-char">
+      <button class="sol-char__portrait" id="char-portrait" aria-label="キャラ">
+        <img id="char-img" alt="" hidden>
+        <span id="char-fallback">🐈</span>
+      </button>
+      <div class="message-window" id="message-window"><span id="message-text"></span></div>
+    </div>
+  </div>
+
+  <!-- Draw モード選択モーダル -->
+  <div class="modal" id="draw-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title">めくり方を選んでね🃏</h2>
+      <div class="modal__options">
+        <button class="modal__option" data-draw="1">
+          <span class="modal__option-icon">1️⃣</span>
+          <span class="modal__option-name">Draw 1（やさしい）</span>
+        </button>
+        <button class="modal__option" data-draw="3">
+          <span class="modal__option-icon">3️⃣</span>
+          <span class="modal__option-name">Draw 3（むずかしい）</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- リザルトモーダル -->
+  <div class="modal" id="result-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title" id="result-title">クリアおめでとうっ💕</h2>
+      <div class="result-rows" id="result-rows"></div>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="btn-again">もう一度遊ぶ</button>
+        <a class="pill-btn" href="../../index.html">ロビーに戻る</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../shared/storage.js"></script>
+  <script src="../../shared/characters.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
