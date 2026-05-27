@@ -264,9 +264,8 @@ function showResult(win) {
   document.getElementById('result-title').textContent =
     win ? (clearLines && clearLines[0]) || 'クリア！' : (overLines && overLines[0]) || 'ゲームオーバー';
 
-  add(win ? 'クリアタイム' : '経過タイム', fmtTime(state.elapsed), false);
-  if (win) add('最速タイム', rec.fastestTime != null ? fmtTime(rec.fastestTime * 1000) : '-', state._isFastest);
-  add('クリア回数', rec.totalWins, false);
+  add('今回のタイム', fmtTime(state.elapsed), false);
+  add('最速タイム', rec.fastestTime != null ? fmtTime(rec.fastestTime * 1000) : '-', state._isFastest);
 
   document.getElementById('result-modal').classList.add('is-visible');
 }
