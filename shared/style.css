@@ -4,15 +4,19 @@
    ============================================ */
 
 :root {
-  --color-pink:        #FFD6E8;
-  --color-pink-deep:   #F7A8C4;
+  --color-pink:        #F7A8C4;
+  --color-pink-deep:   #FFB4D0;
   --color-cream:       #FFF4D6;
-  --color-milky:       #FDF9F0;
-  --color-text:        #5A4A4F;
-  --color-text-soft:   #8A7A7F;
-  --color-border:      #F2D6D6;
-  --color-shadow:      rgba(247, 168, 196, 0.25);
+  --color-milky:       #3B3050;
+  --color-text:        #F0E6F0;
+  --color-text-soft:   #B0A0BC;
+  --color-border:      #4A3F5C;
+  --color-shadow:      rgba(0, 0, 0, 0.45);
   --avatar-color:      #FFF4B8;
+
+  --bg-base:           #1B1626;
+  --bg-surface:        #2D2640;
+  --bg-surface-2:      #3B3050;
 
   --radius-lg: 24px;
   --radius-md: 16px;
@@ -34,9 +38,9 @@ html, body {
   font-family: var(--font-family);
   color: var(--color-text);
   background:
-    radial-gradient(circle at 20% 10%, #FFE9F2 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, #FFF7DC 0%, transparent 45%),
-    var(--color-milky);
+    radial-gradient(circle at 20% 10%, #3B2D52 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #2A3A52 0%, transparent 45%),
+    var(--bg-base);
 }
 
 button {
@@ -63,7 +67,7 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 18px 36px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(30, 24, 42, 0.78);
   backdrop-filter: blur(6px);
   border-bottom: 2px solid var(--color-border);
 }
@@ -81,7 +85,7 @@ button {
   gap: 10px;
   padding: 6px 14px 6px 6px;
   border-radius: 999px;
-  background: white;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   transition: transform 0.2s ease;
 }
@@ -155,12 +159,12 @@ button {
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #FFE9F2 0%, #FFF4D6 100%);
+  background: linear-gradient(135deg, #3B2D52 0%, #2A3A52 100%);
   display: grid;
   place-items: center;
   font-size: 120px;
   box-shadow: var(--shadow-pop);
-  border: 4px solid white;
+  border: 4px solid var(--bg-surface);
 }
 
 /* -------- メッセージウィンドウ -------- */
@@ -169,7 +173,8 @@ button {
   width: 100%;
   min-height: 80px;
   padding: 20px 24px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(45, 38, 64, 0.92);
+  color: var(--color-text);
   border: 2px solid var(--color-pink);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
@@ -190,7 +195,7 @@ button {
   transform: translateX(-50%) rotate(45deg);
   width: 16px;
   height: 16px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(45, 38, 64, 0.92);
   border-left: 2px solid var(--color-pink);
   border-top: 2px solid var(--color-pink);
 }
@@ -219,7 +224,8 @@ button {
   width: 180px;
   height: 180px;
   padding: 16px;
-  background: white;
+  background: var(--bg-surface);
+  color: var(--color-text);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -235,10 +241,10 @@ button {
 .game-tile.is-placeholder {
   background: repeating-linear-gradient(
     45deg,
-    #FFF7DC,
-    #FFF7DC 12px,
-    #FFE9F2 12px,
-    #FFE9F2 24px
+    #3B2D52,
+    #3B2D52 12px,
+    #2A3A52 12px,
+    #2A3A52 24px
   );
   color: var(--color-text-soft);
 }
@@ -269,7 +275,7 @@ button {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(90, 74, 79, 0.4);
+  background: rgba(0, 0, 0, 0.55);
   display: none;
   align-items: center;
   justify-content: center;
@@ -279,7 +285,8 @@ button {
 .modal.is-visible { display: flex; }
 
 .modal__inner {
-  background: white;
+  background: var(--bg-surface);
+  color: var(--color-text);
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   box-shadow: var(--shadow-pop);
@@ -315,6 +322,7 @@ button {
 .modal__option:hover {
   transform: translateY(-3px);
   background: var(--color-pink);
+  color: #2A2438;
 }
 
 .modal__option-icon {
@@ -324,7 +332,7 @@ button {
   display: grid;
   place-items: center;
   font-size: 30px;
-  background: white;
+  background: var(--bg-base);
   overflow: hidden;
 }
 

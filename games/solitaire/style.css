@@ -25,7 +25,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(30, 24, 42, 0.78);
   backdrop-filter: blur(6px);
   border-bottom: 2px solid var(--color-border);
   position: sticky;
@@ -42,7 +42,7 @@
   align-items: center;
   padding: 9px 18px;
   border-radius: 999px;
-  background: white;
+  background: var(--bg-surface-2);
   box-shadow: var(--shadow-soft);
   font-weight: bold;
   font-size: 14px;
@@ -52,7 +52,7 @@
 }
 .pill-btn:hover { transform: translateY(-2px); }
 .pill-btn:active { transform: translateY(0); }
-.pill-btn--accent { background: var(--color-pink); color: var(--color-pink-deep); }
+.pill-btn--accent { background: var(--color-pink); color: #2A2438; }
 .pill-btn[disabled] { opacity: 0.45; pointer-events: none; }
 
 /* -------- 盤面 -------- */
@@ -98,7 +98,7 @@
   inset: 0;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(45, 38, 64, 0.55);
 }
 .pile--foundation { }
 .pile--foundation[data-suit]::after {
@@ -108,7 +108,7 @@
   display: grid;
   place-items: center;
   font-size: 34px;
-  color: rgba(90, 74, 79, 0.18);
+  color: rgba(240, 230, 240, 0.22);
   pointer-events: none;
 }
 

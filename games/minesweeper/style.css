@@ -12,7 +12,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(30, 24, 42, 0.78);
   backdrop-filter: blur(6px);
   border-bottom: 2px solid var(--color-border);
   position: sticky;
@@ -26,13 +26,13 @@
 .pill-btn {
   display: inline-flex; align-items: center;
   padding: 9px 18px; border-radius: 999px;
-  background: white; box-shadow: var(--shadow-soft);
+  background: var(--bg-surface-2); box-shadow: var(--shadow-soft);
   font-weight: bold; font-size: 14px; text-decoration: none; color: var(--color-text);
   transition: transform 0.15s ease, background 0.15s ease;
 }
 .pill-btn:hover { transform: translateY(-2px); }
 .pill-btn:active { transform: translateY(0); }
-.pill-btn--accent { background: var(--color-pink); color: var(--color-pink-deep); }
+.pill-btn--accent { background: var(--color-pink); color: #2A2438; }
 
 /* 盤面 */
 .ms-board-wrap {
@@ -46,7 +46,7 @@
   display: grid;
   gap: 3px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(45, 38, 64, 0.55);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
   user-select: none;
@@ -99,8 +99,8 @@
 }
 .ms-opt small { font-weight: normal; font-size: 11px; color: var(--color-text-soft); }
 .ms-opt:hover { transform: translateY(-2px); }
-.ms-opt.is-active { background: var(--color-pink); box-shadow: 0 0 0 2px var(--color-pink-deep); }
-.ms-opt.is-active small { color: var(--color-pink-deep); }
+.ms-opt.is-active { background: var(--color-pink); color: #2A2438; box-shadow: 0 0 0 2px var(--color-pink-deep); }
+.ms-opt.is-active small { color: #2A2438; }
 .ms-modal__actions { display: flex; gap: 12px; justify-content: center; margin-top: 22px; }
 
 /* リザルト行（ソリティアと共通スタイル） */
