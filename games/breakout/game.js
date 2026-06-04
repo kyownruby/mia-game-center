@@ -32,10 +32,10 @@ const ITEM_TYPES = [
 
 const BLOCK_COLORS = {
   N: ['#F7A8C4', '#A8D8F0', '#FFE08A', '#A8E0C0', '#D6B8F0'],
-  H: ['#A4BCE0', '#7E97B8'],         // HP=2,1
-  h: ['#7B6F86', '#8E8195', '#A89AAE'], // HP=3,2,1
+  H: ['#A4BCE0', '#7E97B8'],          // HP=2,1
+  h: ['#B7A6CE', '#CCBADC', '#E0CFEC'], // HP=3,2,1（暗背景向けに明るめ）
   I: '#FFD15B',
-  X: '#7A6E73',
+  X: '#5E5466',                        // 暗背景でも視認できる程度
 };
 
 const SCORE = { N: 10, H: 30, h: 30, I: 20, COMBO_STEP: 5, COMBO_MAX: 50,
@@ -513,7 +513,7 @@ function drawScene() {
   }
   // 発射待ちのガイド
   if (state.awaitingLaunch) {
-    ctx.fillStyle = 'rgba(90,74,79,0.6)';
+    ctx.fillStyle = 'rgba(240,230,240,0.85)';
     ctx.font = 'bold 18px "Hiragino Maru Gothic ProN", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Space で発射っ！', CANVAS_W / 2, PADDLE_Y - 40);
@@ -522,9 +522,9 @@ function drawScene() {
   if (state.effect) {
     const left = Math.max(0, state.effect.until - performance.now());
     const ratio = left / EFFECT_MS;
-    ctx.fillStyle = 'rgba(247,168,196,0.85)';
+    ctx.fillStyle = 'rgba(247,168,196,0.95)';
     ctx.fillRect(BLOCK_SIDE, 12, (CANVAS_W - BLOCK_SIDE * 2) * ratio, 4);
-    ctx.fillStyle = 'rgba(90,74,79,0.7)';
+    ctx.fillStyle = 'rgba(240,230,240,0.9)';
     ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('効果: ' + effectLabel(state.effect.type), BLOCK_SIDE, 30);
   }

@@ -88,3 +88,75 @@
 .sol-char__portrait { background: none; border: none; padding: 0; cursor: pointer; pointer-events: auto; }
 .sol-char__portrait img { height: 240px; width: auto; filter: drop-shadow(0 8px 14px var(--color-shadow)); }
 .sol-char__portrait #char-fallback { font-size: 90px; }
+
+/* ============================================
+   🌙 ダークモード（ブロックくずしのみ）
+   ============================================ */
+
+body {
+  background:
+    radial-gradient(circle at 20% 10%, #3B2D52 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, #2A3A52 0%, transparent 45%),
+    #1B1626;
+  color: #F0E6F0;
+}
+
+.bk-header {
+  background: rgba(30, 24, 42, 0.78);
+  border-bottom: 2px solid #4A3F5C;
+}
+.stat { color: #DCD0E8; }
+.stat strong { color: #FFB4D0; }
+
+.pill-btn {
+  background: #3B2F50;
+  color: #F0E6F0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.pill-btn:hover { background: #4A3D60; }
+.pill-btn--accent { background: #F7A8C4; color: #2A2438; }
+
+#game {
+  background: linear-gradient(180deg, #1F1B2E 0%, #2D2546 100%);
+  border-color: #4A3F5C;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+.bk-hint { color: #B0A0BC; }
+
+/* モーダル */
+.modal__inner {
+  background: #2D2640;
+  color: #F0E6F0;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+.modal__title { color: #FFB4D0; }
+
+.bk-modal__label { color: #BFAFD0; }
+.bk-opt { background: #3B3050; color: #F0E6F0; }
+.bk-opt small { color: #B0A0BC; }
+.bk-opt.is-active { background: #F7A8C4; color: #2A2438; box-shadow: 0 0 0 2px #FFD6E8; }
+.bk-opt.is-active small { color: #2A2438; }
+
+.bk-stage-tile { background: #3B3050; color: #F0E6F0; }
+.bk-stage-tile:hover { background: #F7A8C4; color: #2A2438; }
+.bk-stage-tile__num { color: #FFB4D0; }
+.bk-stage-tile__best, .bk-stage-tile__check { color: #B0A0BC; }
+.bk-stage-tile:hover .bk-stage-tile__num,
+.bk-stage-tile:hover .bk-stage-tile__best,
+.bk-stage-tile:hover .bk-stage-tile__check { color: #2A2438; }
+
+.result-row { border-bottom: 1px dashed #4A3F5C; color: #F0E6F0; }
+.result-row.is-best strong { color: #FFB4D0; }
+.result-row .badge { background: #F7A8C4; color: #2A2438; }
+
+/* メッセージウィンドウもダークに */
+.sol-char .message-window {
+  background: rgba(45, 38, 64, 0.92);
+  color: #F0E6F0;
+  border-color: #F7A8C4;
+}
+.sol-char .message-window::before {
+  background: rgba(45, 38, 64, 0.92);
+  border-left-color: #F7A8C4;
+  border-top-color: #F7A8C4;
+}
