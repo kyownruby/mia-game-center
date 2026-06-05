@@ -8,7 +8,7 @@ const ROOT = '../../';
 const IDLE_MS = 30000;
 
 const CANVAS_W = 960, CANVAS_H = 640;
-const COLS = 20;                            // 横半分にして倍密度
+const COLS = 18;                            // 横半分にしたうえで縦横比を整える
 const BLOCK_GAP = 3, BLOCK_VGAP = 6, BLOCK_TOP = 70, BLOCK_SIDE = 24;
 const BLOCK_W = (CANVAS_W - BLOCK_SIDE * 2 - BLOCK_GAP * (COLS - 1)) / COLS;
 const BLOCK_H = 24;
