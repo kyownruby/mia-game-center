@@ -123,17 +123,18 @@ const STAGES = [
     '....hhhhhhhhhhh.....',
   ] },
 
-  // 10: BOSS パソコンの回路（14×10、X壁で区画を作って中に色んな種類）
+  // 10: BOSS パソコンの基板（X=配線外枠／N=回路の中身／H=接合点／I=CPUコア）
+  // 侵入口: 上=列4,9,16 / 下=列6 / 横通路=行6両端
   { name: 'PC Circuit', rows: [
-    '...XXXXXXXXXXXXXX...',
-    '...XNNX.XIIX.XhhX...',
-    '...XNNX.XIIX.XhhX...',
-    '...XXX.XXX.XXXX.X...',
-    '...X.XHHHXNINNIIX...',
-    '...X.XHHHXNINNIIX...',
-    '...XXX.XXXXX.XXXX...',
-    '...XHHXIIIXhhhXNX...',
-    '...XHHXIIIXhhhXNX...',
-    '...XXXXXXXXXXXXXX...',
+    'XXX.XXXX.XXXXXX.XXXX',
+    'XNXNNHNNNNNNHNNNNNNX',
+    'XNXXXNXXXXXXNXXXXXNX',
+    'XNNNNNNNINNNNNNNNNNX',
+    'XNXXXNXHXXXNNXXXXNXX',
+    '.NNNNNNNNINNNNNNNNN.',
+    'XXXNXXXXXXXHXXXNXNXX',
+    'XNNNNNNHNNNNNNNNNNNX',
+    'XXXXXXNXXXXXXXXXXXXX',
+    'XXXXX.XXXXXXXXXXXXXX',
   ] },
 ];
