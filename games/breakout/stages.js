@@ -53,20 +53,20 @@ const STAGES = [
       '.......NNN........',
     ] },
 
-  // 4: 猫🐈 — オレンジ/三毛
+  // 4: 猫🐈 — オレンジ/三毛（顔: 三角耳・目・鼻・口）
   { name: 'Cat',
     palette: ['#FFC890', '#FFB47A', '#FFD4A4', '#FFC080', '#FFA868'],
     rows: [
-      '....HH.......HH...',
-      '...HHHH.....HHHH..',
+      '....HH......HH....',
+      '...HHHH....HHHH...',
       '...NNNNNNNNNNNN...',
-      '..NNNNNNNNNNNNNN..',
-      '..NN.II.NN.II.NN..',
-      '..NNNNNNNNNNNNNN..',
-      '..NNN.NNNNNN.NNN..',
-      '..NNNNN.NN.NNNNN..',
-      '..NNNNNNNNNNNNNN..',
       '...NNNNNNNNNNNN...',
+      '...NN.II..II.NN...',
+      '...NNNNNNNNNNNN...',
+      '...NNNN.NN.NNNN...',
+      '...NNNNNNNNNNNN...',
+      '....NNNNNNNNNN....',
+      '.....NNNNNNNN.....',
     ] },
 
   // 5: 月と雲🌙 — ブルー/シルバー
