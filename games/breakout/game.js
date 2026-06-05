@@ -147,6 +147,7 @@ function renderChar() {
 /* ---------------- ステージ / 盤面構築 ---------------- */
 function buildStage(n) {
   const def = STAGES[n - 1];
+  const palette = def.palette || BLOCK_COLORS.N;
   state.blocks = [];
   def.rows.forEach((row, ri) => {
     for (let ci = 0; ci < COLS; ci++) {
@@ -158,9 +159,12 @@ function buildStage(n) {
       if (ch === 'H') hp = 2;
       else if (ch === 'h') hp = 3;
       else if (ch === 'X') hp = Infinity;
-      const colorPool = BLOCK_COLORS[ch === 'N' ? 'N' : ch];
-      const color = ch === 'N' ? colorPool[(ri + ci) % colorPool.length] : null;
-      state.blocks.push({ x, y, w: BLOCK_W, h: BLOCK_H, type: ch, hp, alive: true, color });
+      // ステージのパレットから位置依存で色を決定。
+      // N: そのまま使う／H,h: HP=1になった時に同じ色で表示するため weakColor として保持
+      const paletteColor = palette[(ri + ci) % palette.length];
+      const color = ch === 'N' ? paletteColor : null;
+      const weakColor = (ch === 'H' || ch === 'h') ? paletteColor : null;
+      state.blocks.push({ x, y, w: BLOCK_W, h: BLOCK_H, type: ch, hp, alive: true, color, weakColor });
     }
   });
 }
@@ -628,12 +632,31 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 function drawBlock(b) {
+  // 硬いブロック（HP>1）: 角ばった立体的なメタル風＋HP数字
+  if ((b.type === 'H' || b.type === 'h') && b.hp > 1) {
+    const base = b.type === 'h' ? '#8C7F9C' : '#7E97B8';
+    ctx.fillStyle = base;
+    roundRect(ctx, b.x, b.y, b.w, b.h, 2); ctx.fill();
+    // エンボス：上＆左に光、下＆右に影
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillRect(b.x + 2, b.y + 2, b.w - 4, 2);
+    ctx.fillRect(b.x + 2, b.y + 4, 2, b.h - 8);
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.fillRect(b.x + 2, b.y + b.h - 4, b.w - 4, 2);
+    ctx.fillRect(b.x + b.w - 4, b.y + 4, 2, b.h - 8);
+    // HP残量
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(b.hp), b.x + b.w / 2, b.y + b.h / 2);
+    ctx.textBaseline = 'alphabetic';
+    return;
+  }
+  // 通常 / アイテム / 消えない / 硬いブロックのHP=1 → 普通ブロックと同じ見た目
   let color;
-  if (b.type === 'N') color = b.color;
-  else if (b.type === 'H') color = BLOCK_COLORS.H[Math.max(0, 2 - b.hp)];
-  else if (b.type === 'h') color = BLOCK_COLORS.h[Math.max(0, 3 - b.hp)];
-  else if (b.type === 'I') color = BLOCK_COLORS.I;
+  if (b.type === 'I') color = BLOCK_COLORS.I;
   else if (b.type === 'X') color = BLOCK_COLORS.X;
+  else color = b.color || b.weakColor;
   ctx.fillStyle = color;
   roundRect(ctx, b.x, b.y, b.w, b.h, 6); ctx.fill();
   // ハイライト
