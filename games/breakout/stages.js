@@ -4,149 +4,136 @@
    ブロック配置（20列固定。記号:
      N=普通 / H=硬い(HP2) / h=硬い(HP3) / I=アイテム / X=消えない / .=空)
 
-   テーマ別の絵柄ステージ：1〜3シンプル→10ボス（PC回路）
+   各ステージはテーマに沿った絵柄で、横幅を使い切らずに中央寄せで配置
    ============================================================ */
 const STAGES = [
-  // 1: ハート💕（普通のみ）
+  // 1: ハート💕（8×10、中央寄せ）
   { name: 'Heart', rows: [
-    '....NNNN....NNNN....',
-    '...NNNNNN..NNNNNN...',
-    '..NNNNNNNNNNNNNNNN..',
-    '..NNNNNNNNNNNNNNNN..',
-    '..NNNNNNNNNNNNNNNN..',
-    '...NNNNNNNNNNNNNN...',
-    '....NNNNNNNNNNNN....',
-    '.....NNNNNNNNNN.....',
+    '......NN..NN........',
+    '......NNNNNNNN......',
+    '......NNNNNNNN......',
+    '......NNNNNNNN......',
+    '......NNNNNNNN......',
+    '......NNNNNNNN......',
     '......NNNNNNNN......',
     '.......NNNNNN.......',
     '........NNNN........',
     '.........NN.........',
   ] },
 
-  // 2: 星✨（先端にItem）
+  // 2: 星✨（9×9、両端Item）
   { name: 'Star', rows: [
-    '.........II.........',
-    '........NNNN........',
-    '........NNNN........',
-    'NNNNNNNNNNNNNNNNNNNN',
-    '.NNNNNNNNNNNNNNNNNN.',
-    '..NNNNNNNNNNNNNNNN..',
+    '.........I..........',
+    '.........N..........',
+    '........NNN.........',
+    '.....NNNNNNNNN......',
+    '......NNNNNNN.......',
+    '.......NNNNN........',
+    '......NN...NN.......',
+    '.....NN.....NN......',
+    '....NN.......NN.....',
+  ] },
+
+  // 3: 花🌸（9×9、雌しべItem）
+  { name: 'Flower', rows: [
+    '........NNN.........',
+    '.......NNNNN........',
+    '........NNN.........',
+    '.....NN.....NN......',
+    '....NNN..I..NNN.....',
+    '.....NN.....NN......',
+    '........NNN.........',
+    '.......NNNNN........',
+    '........NNN.........',
+  ] },
+
+  // 4: 猫🐈（10×10、目はItem、耳に硬い）
+  { name: 'Cat', rows: [
+    '.....HH.......HH....',
+    '....HHHH.....HHHH...',
+    '....NNNNNNNNNNNN....',
     '...NNNNNNNNNNNNNN...',
+    '...NN.II.NN.II.NN...',
+    '...NNNNNNNNNNNNNN...',
+    '...NNN.NNNNNN.NNN...',
+    '...NNNNN.NN.NNNNN...',
+    '...NNNNNNNNNNNNNN...',
+    '....NNNNNNNNNNNN....',
+  ] },
+
+  // 5: 月と雲🌙（8×9、三日月）
+  { name: 'Moon', rows: [
+    '......NNNNNN........',
+    '.....NNNNNNNN.......',
+    '.....NN....NN.......',
+    '.....NN.............',
+    '.....NN.............',
+    '.....NN.............',
+    '.....NN....NN.......',
+    '.....NNNNNNNN.......',
+    '......NNNNNN........',
+  ] },
+
+  // 6: リボン🎀（12×7、結び目に硬いとItem）
+  { name: 'Ribbon', rows: [
+    '....NNN......NNN....',
+    '....NNNN....NNNN....',
+    '....NNNNNNNNNNNN....',
+    '....NNH.IIII.HNN....',
+    '....NNNNNNNNNNNN....',
     '....NNNN....NNNN....',
     '....NNN......NNN....',
-    '....NN........NN....',
   ] },
 
-  // 3: 花🌸（4花弁＋雌しべアイテム）
-  { name: 'Flower', rows: [
-    '.....NNNN..NNNN.....',
-    '....NNNNNNNNNNNN....',
-    '....NNNNNNNNNNNN....',
-    '.....NNNN..NNNN.....',
-    '.NN....NN..NN....NN.',
-    'NNNN..NN.II.NN..NNNN',
-    '.NN....NN..NN....NN.',
-    '.....NNNN..NNNN.....',
-    '....NNNNNNNNNNNN....',
-    '....NNNNNNNNNNNN....',
-    '.....NNNN..NNNN.....',
-  ] },
-
-  // 4: 猫🐈（耳に硬いブロック、目はItem）
-  { name: 'Cat', rows: [
-    '..NN..........NN....',
-    '.HNNN........NNNH...',
-    '.NNNNNNNNNNNNNNNN...',
-    'NNNNNNNNNNNNNNNNNN..',
-    'NNN.II.NNNN.II.NNN..',
-    'NNNNNNNNNNNNNNNNNN..',
-    'NNNN.NN....NN.NNNN..',
-    'NNNNNNNNNNNNNNNNNN..',
-    '.NNNNNNNNNNNNNNNN...',
-    '..NNNNNNNNNNNNNN....',
-  ] },
-
-  // 5: 月と雲🌙（左に三日月、右に雲、ところどころに硬いブロック）
-  { name: 'Moon & Cloud', rows: [
-    '.NNNN.......NN......',
-    'NNNNNN.....NNNN.....',
-    'NNN........NNNNNN...',
-    'NNN.......NNNNNNNN..',
-    'NNN.H....NNNNNNNNN..',
-    'NNN.....NNNNNNNNNN..',
-    'NNN....NNNNNNNNNNN..',
-    'NNNN..NNNNNNNNNNNN..',
-    'NNNNNNNNNNN....NN...',
-    '.NNNN..........NN...',
-  ] },
-
-  // 6: リボン🎀（結び目に硬い＋Item）
-  { name: 'Ribbon', rows: [
-    'NNNN........NNNN....',
-    'NNNNN......NNNNN....',
-    'NNNNNN....NNNNNN....',
-    '.NNNNNN..NNNNNN.....',
-    '..NNNNNNNNNNNN......',
-    '....NNHIIHNN........',
-    '..NNNNNNNNNNNN......',
-    '.NNNNNN..NNNNNN.....',
-    'NNNNNN....NNNNNN....',
-    'NNNNN......NNNNN....',
-    'NNNN........NNNN....',
-  ] },
-
-  // 7: インベーダー風👾（硬いを目に、消えないを足に）
+  // 7: インベーダー👾（10×7、目に硬い、足にItem）
   { name: 'Invader', rows: [
-    '....N..NNNN..N......',
-    '.....NNNNNNNN.......',
-    '....NNHHNNHHNN......',
-    '....NNNNNNNNNN......',
-    '....NN.NNNN.NN......',
-    '....N..NNNN..N......',
-    '.....I..II..I.......',
-    '.....X........X.....',
+    '.....N..NNNN..N.....',
+    '......NNNNNNNN......',
+    '.....NNHHNNHHNN.....',
+    '.....NNNNNNNNNN.....',
+    '.....NN.NNNN.NN.....',
+    '.....N..NNNN..N.....',
+    '.....I..IIII..I.....',
   ] },
 
-  // 8: 雪の結晶❄（硬いブロック＋Itemの中央）
+  // 8: 雪の結晶❄（11×11、6角対称・先端Item）
   { name: 'Snowflake', rows: [
     '.........II.........',
     '.........HH.........',
     '....H....HH....H....',
-    '.HHHH....HH....HHHH.',
-    '...HH....HH....HH...',
-    '.....HHHHHHHHHH.....',
-    '.....HHHHHHHHHH.....',
-    '...HH....HH....HH...',
-    '.HHHH....HH....HHHH.',
+    '....HH...HH...HH....',
+    '.....HH..HH..HH.....',
+    '....HHHHHHHHHHHH....',
+    '.....HH..HH..HH.....',
+    '....HH...HH...HH....',
     '....H....HH....H....',
     '.........HH.........',
     '.........II.........',
   ] },
 
-  // 9: クラウン👑（3つの尖塔・宝石としてItem、HP3で堅め）
+  // 9: クラウン👑（11×8、3つの尖塔＋宝石Item）
   { name: 'Crown', rows: [
-    '.hh.....hh....hh....',
-    '.hh.....hh....hh....',
-    '.hh.....hh....hh....',
-    '.hhhhhhhhhhhhhhhh...',
-    '.HHHHHHHHHHHHHHHH...',
-    '.HHIHHHIIHHIIHHIH...',
-    '.HHHHHHHHHHHHHHHH...',
-    '.HHHHHHHHHHHHHHHH...',
-    'hhhhhhhhhhhhhhhhhh..',
+    '....h....h....h.....',
+    '....h....h....h.....',
+    '....hh..hh...hh.....',
+    '....hhhhhhhhhhh.....',
+    '....HHHHHHHHHHH.....',
+    '....HIHHIIHHIHH.....',
+    '....HHHHHHHHHHH.....',
+    '....hhhhhhhhhhh.....',
   ] },
 
-  // 10: BOSS パソコンの回路（消えないブロックで区画を作り、中に色んな種類）
+  // 10: BOSS パソコンの回路（14×10、X壁で区画を作って中に色んな種類）
   { name: 'PC Circuit', rows: [
-    'XXXXXXXXXXXXXXXXXXXX',
-    'X.NHIX.XhhIIX.XNNHIX',
-    'X.NHIX.XhhIIX.XNNHIX',
-    'XXX.X.XXX.XXXXX.XXXX',
-    'XHHHX.X.NIIN.X.X.NNX',
-    'XHHHX.X.NIIN.X.X.NNX',
-    'XXXXX.XXXXXX.XXX.XXX',
-    'XNNNXIIXhhhXXIIINNHX',
-    'XNNNXIIXhhhXXIIINNHX',
-    'XXXXXXXXXXXXXXXXXXXX',
+    '...XXXXXXXXXXXXXX...',
+    '...XNNX.XIIX.XhhX...',
+    '...XNNX.XIIX.XhhX...',
+    '...XXX.XXX.XXXX.X...',
+    '...X.XHHHXNINNIIX...',
+    '...X.XHHHXNINNIIX...',
+    '...XXX.XXXXX.XXXX...',
+    '...XHHXIIIXhhhXNX...',
+    '...XHHXIIIXhhhXNX...',
+    '...XXXXXXXXXXXXXX...',
   ] },
 ];
