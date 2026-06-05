@@ -8,7 +8,7 @@ const GAMES = [
 const TYPING_SPEED_MS = 50;
 const AUTO_HIDE_DELAY_MS = 4000;
 
-const SELECTABLE = ['mia', 'kyown', 'rain'];    // アバターとして選べるキャラ
+const SELECTABLE = ['mia', 'kyown', 'rain', 'shiori'];    // アバターとして選べるキャラ
 
 const chars = {};
 let selectedId = 'mia';
