@@ -4,7 +4,7 @@
  */
 const Characters = (() => {
   const cache = {};
-  const ASSET_V = '7'; // キャッシュ対策バージョン（更新時に上げる）
+  const ASSET_V = '8'; // キャッシュ対策バージョン（更新時に上げる）
 
   async function load(id, basePath = 'characters/') {
     if (cache[id]) return cache[id];

@@ -2,7 +2,7 @@
    ブロックくずし専用スタイル
    ============================================ */
 
-.bk { display: flex; flex-direction: column; min-height: 100vh; min-width: 1024px; }
+.bk { display: flex; flex-direction: column; min-height: 100vh; min-width: 1300px; }
 
 .bk-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -24,7 +24,29 @@
 .pill-btn--accent { background: var(--color-pink); color: var(--color-pink-deep); }
 .pill-btn[disabled] { opacity: 0.45; pointer-events: none; }
 
-.bk-main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 24px; gap: 8px; }
+.bk-main {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  gap: 24px;
+}
+.bk-canvas-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+/* キャラエリアをキャンバスの右隣に配置（position:fixed を上書き） */
+.bk-side {
+  position: static;
+  right: auto;
+  bottom: auto;
+  width: 280px;
+  padding-top: 8px;
+}
 
 #game {
   width: 960px; height: 640px;

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>ブロックくずし｜ミアの遊び場</title>
-  <link rel="stylesheet" href="../../shared/style.css?v=7">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="../../shared/style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <div class="bk">
@@ -22,17 +22,18 @@
     </header>
 
     <main class="bk-main">
-      <canvas id="game" width="960" height="640"></canvas>
-      <div class="bk-hint">操作: A/D または ←→ でパドル　／　Space で発射＆強打（パドル接触±0.1秒）</div>
+      <div class="bk-canvas-area">
+        <canvas id="game" width="960" height="640"></canvas>
+        <div class="bk-hint">操作: A/D または ←→ でパドル　／　Space で発射＆強打（パドル接触±0.1秒）</div>
+      </div>
+      <aside class="sol-char bk-side">
+        <button class="sol-char__portrait" id="char-portrait" aria-label="キャラ">
+          <img id="char-img" alt="" hidden>
+          <span id="char-fallback" hidden>🐈</span>
+        </button>
+        <div class="message-window" id="message-window"><span id="message-text"></span></div>
+      </aside>
     </main>
-
-    <div class="sol-char">
-      <button class="sol-char__portrait" id="char-portrait" aria-label="キャラ">
-        <img id="char-img" alt="" hidden>
-        <span id="char-fallback" hidden>🐈</span>
-      </button>
-      <div class="message-window" id="message-window"><span id="message-text"></span></div>
-    </div>
   </div>
 
   <!-- 新規ゲームモーダル -->
@@ -77,9 +78,9 @@
     </div>
   </div>
 
-  <script src="../../shared/storage.js?v=7"></script>
-  <script src="../../shared/characters.js?v=7"></script>
-  <script src="stages.js?v=7"></script>
-  <script src="game.js?v=7"></script>
+  <script src="../../shared/storage.js?v=8"></script>
+  <script src="../../shared/characters.js?v=8"></script>
+  <script src="stages.js?v=8"></script>
+  <script src="game.js?v=8"></script>
 </body>
 </html>
