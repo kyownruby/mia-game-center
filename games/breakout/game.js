@@ -40,7 +40,7 @@ const BLOCK_COLORS = {
   N: ['#F7A8C4', '#A8D8F0', '#FFE08A', '#A8E0C0', '#D6B8F0'],
   H: ['#A4BCE0', '#7E97B8'],          // HP=2,1
   h: ['#B7A6CE', '#CCBADC', '#E0CFEC'], // HP=3,2,1（暗背景向けに明るめ）
-  I: '#FFD15B',
+  I: '#4FD8E8',                        // ステージのパレットと被らない鮮やかシアン
   X: '#5E5466',                        // 暗背景でも視認できる程度
 };
 
@@ -632,7 +632,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 function drawBlock(b) {
-  // 硬いブロック（HP>1）: 角ばった立体的なメタル風＋HP数字
+  // 硬いブロック（HP>1）: 角ばった立体的なメタル風
   if ((b.type === 'H' || b.type === 'h') && b.hp > 1) {
     const base = b.type === 'h' ? '#8C7F9C' : '#7E97B8';
     ctx.fillStyle = base;
@@ -644,12 +644,6 @@ function drawBlock(b) {
     ctx.fillStyle = 'rgba(0,0,0,0.38)';
     ctx.fillRect(b.x + 2, b.y + b.h - 4, b.w - 4, 2);
     ctx.fillRect(b.x + b.w - 4, b.y + 4, 2, b.h - 8);
-    // HP残量
-    ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(b.hp), b.x + b.w / 2, b.y + b.h / 2);
-    ctx.textBaseline = 'alphabetic';
     return;
   }
   // 通常 / アイテム / 消えない / 硬いブロックのHP=1 → 普通ブロックと同じ見た目
