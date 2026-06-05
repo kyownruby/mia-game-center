@@ -8,10 +8,16 @@ const ROOT = '../../';
 const IDLE_MS = 30000;
 
 const CANVAS_W = 960, CANVAS_H = 640;
-const COLS = 10;
-const BLOCK_GAP = 4, BLOCK_VGAP = 6, BLOCK_TOP = 70, BLOCK_SIDE = 24;
+const COLS = 20;                            // 横半分にして倍密度
+const BLOCK_GAP = 3, BLOCK_VGAP = 6, BLOCK_TOP = 70, BLOCK_SIDE = 24;
 const BLOCK_W = (CANVAS_W - BLOCK_SIDE * 2 - BLOCK_GAP * (COLS - 1)) / COLS;
 const BLOCK_H = 24;
+
+/* ---- 強打（Strike）関連 ---- */
+const STRIKE_WINDOW_MS = 100;     // パドル接触±0.1秒
+const STRIKE_DURATION_MS = 500;   // 強打の効果時間
+const STRIKE_SPEED_MULT = 1.7;    // 速度倍率
+const STRIKE_DIALOG_COOLDOWN_MS = 3000;
 
 const PADDLE_BASE_W = 120, PADDLE_BIG_W = 180, PADDLE_SMALL_W = 80;
 const PADDLE_H = 14, PADDLE_Y = CANVAS_H - 50;
@@ -72,6 +78,14 @@ const state = {
   paused: false,
   ended: false,
   won: false,             // ステージ/アーケード完遂
+
+  /* ---- 強打 ---- */
+  lastSpaceTime: 0,
+  lastPaddleHitTime: 0,
+  lastPaddleHitBall: null,
+  paddleFlashUntil: 0,
+  lastStrikeDialog: 0,
+  floatTexts: [],
 };
 
 let canvas, ctx;
@@ -247,11 +261,6 @@ function updatePaddle(dt) {
 }
 
 function launchBall() {
-  if (!state.awaitingLaunch) {
-    // スティッキー中で吸着しているボールがあれば離す
-    for (const b of state.balls) if (b.stuck) { releaseStuckBall(b); break; }
-    return;
-  }
   const b = state.balls[0];
   if (!b) return;
   // 軽くランダムな角度で発射（垂直に近い）
@@ -264,6 +273,37 @@ function launchBall() {
   if (state.stageStartTime === 0) state.stageStartTime = performance.now();
   if (state.mode === 'arcade' && state.runStartTime === 0) state.runStartTime = performance.now();
   say('ball_launch');
+}
+
+/* Space キーの統合ハンドラ: 発射 / スティッキー解放 / 強打タイミング */
+function onSpace() {
+  if (state.ended) return;
+  if (state.awaitingLaunch) { launchBall(); return; }
+  // スティッキー吸着中のボールがあれば離す
+  for (const b of state.balls) if (b.stuck) { releaseStuckBall(b); return; }
+  // 強打タイミング判定（パドル接触±0.1秒）
+  const now = performance.now();
+  if (state.lastPaddleHitTime && now - state.lastPaddleHitTime <= STRIKE_WINDOW_MS && state.lastPaddleHitBall) {
+    triggerStrike(state.lastPaddleHitBall);
+    state.lastPaddleHitTime = 0;
+    return;
+  }
+  // まだパドルに当たってない → 次回のために押下時刻を記録
+  state.lastSpaceTime = now;
+}
+
+function triggerStrike(b) {
+  if (!b || b.stuck) return;
+  const now = performance.now();
+  b.strikeUntil = now + STRIKE_DURATION_MS;
+  b.vx *= STRIKE_SPEED_MULT;
+  b.vy *= STRIKE_SPEED_MULT;
+  state.paddleFlashUntil = now + 250;
+  state.floatTexts.push({ text: 'Strike!', x: b.x, y: b.y - 30, life: 0.7, max: 0.7 });
+  if (now - state.lastStrikeDialog >= STRIKE_DIALOG_COOLDOWN_MS) {
+    state.lastStrikeDialog = now;
+    say('strike');
+  }
 }
 function releaseStuckBall(b) {
   const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
@@ -303,7 +343,27 @@ function updateBalls(dt) {
         }
         state.combo = 0;
         updateComboDisplay();
+        // 強打：パドル接触±0.1秒以内にSpaceが押されていれば成功
+        const now = performance.now();
+        state.lastPaddleHitTime = now;
+        state.lastPaddleHitBall = b;
+        if (state.lastSpaceTime && now - state.lastSpaceTime <= STRIKE_WINDOW_MS) {
+          triggerStrike(b);
+          state.lastSpaceTime = 0;
+        }
       }
+    }
+    // 強打効果の期限切れ → 速度を通常値に戻す（方向は維持）
+    if (b.strikeUntil && performance.now() >= b.strikeUntil) {
+      b.strikeUntil = 0;
+      const sp = Math.hypot(b.vx, b.vy) || 1;
+      const k = state.ballSpeed / sp;
+      b.vx *= k; b.vy *= k;
+    }
+    // 強打中のキラキラ軌跡
+    if (b.strikeUntil && Math.random() < 0.6) {
+      state.particles.push({ x: b.x, y: b.y, vx: (Math.random() - 0.5) * 60, vy: 30 + Math.random() * 40,
+        life: 0.35, r: 2 + Math.random() * 2, c: 'hsla(50,95%,75%,1)' });
     }
     // ブロック
     collideBallWithBlocks(b);
@@ -329,6 +389,7 @@ function updateBalls(dt) {
 
 function collideBallWithBlocks(b) {
   // 1フレーム内で複数ブロックと当たり得るので近接順に処理
+  const penetrating = state.penetrating || (b.strikeUntil && b.strikeUntil > performance.now());
   for (let i = 0; i < state.blocks.length; i++) {
     const blk = state.blocks[i];
     if (!blk.alive) continue;
@@ -338,7 +399,9 @@ function collideBallWithBlocks(b) {
     if (dx * dx + dy * dy > b.r * b.r) continue;
     // 衝突 → ヒット
     hitBlock(blk, b);
-    if (!state.penetrating) {
+    // 貫通中でも消えないブロックは反射させる
+    const passThrough = penetrating && blk.type !== 'X';
+    if (!passThrough) {
       // 跳ね返し方向：x方向 vs y方向の侵入量で判定
       const overlapX = b.r - Math.abs(dx);
       const overlapY = b.r - Math.abs(dy);
@@ -430,6 +493,14 @@ function updateParticles(dt) {
   }
 }
 
+function updateFloatTexts(dt) {
+  for (let i = state.floatTexts.length - 1; i >= 0; i--) {
+    const t = state.floatTexts[i];
+    t.y -= 60 * dt; t.life -= dt;
+    if (t.life <= 0) state.floatTexts.splice(i, 1);
+  }
+}
+
 /* ---------------- イベント ---------------- */
 function onBallLost() {
   say('ball_lost');
@@ -518,6 +589,19 @@ function drawScene() {
     ctx.textAlign = 'center';
     ctx.fillText('Space で発射っ！', CANVAS_W / 2, PADDLE_Y - 40);
   }
+  // フロート文字（Strike! など）
+  for (const t of state.floatTexts) {
+    const a = Math.max(0, t.life / t.max);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.font = 'bold 28px "Hiragino Maru Gothic ProN", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(255,210,90,0.9)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#FFE680';
+    ctx.fillText(t.text, t.x, t.y);
+    ctx.restore();
+  }
   // 効果残り時間
   if (state.effect) {
     const left = Math.max(0, state.effect.until - performance.now());
@@ -568,7 +652,18 @@ function drawBlock(b) {
   }
 }
 function drawPaddle() {
-  ctx.fillStyle = '#F7A8C4';
+  const now = performance.now();
+  const flashing = state.paddleFlashUntil > now;
+  if (flashing) {
+    // 強打成功時の光彩
+    ctx.save();
+    ctx.shadowColor = '#FFE680';
+    ctx.shadowBlur = 28;
+    ctx.fillStyle = '#FFEAA0';
+    roundRect(ctx, state.paddle.x - 3, PADDLE_Y - 3, state.paddle.w + 6, PADDLE_H + 6, 10); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = flashing ? '#FFD0E5' : '#F7A8C4';
   roundRect(ctx, state.paddle.x, PADDLE_Y, state.paddle.w, PADDLE_H, 8); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   roundRect(ctx, state.paddle.x + 4, PADDLE_Y + 2, state.paddle.w - 8, 4, 3); ctx.fill();
@@ -615,6 +710,7 @@ function loop(t) {
     updateBalls(dt);
     updateItems(dt);
     updateParticles(dt);
+    updateFloatTexts(dt);
     updateEffect(performance.now());
   }
   drawScene();
@@ -643,6 +739,8 @@ function newGame(mode, life, stage) {
   state.ended = false; state.won = false;
   state.stageStartTime = 0; state.stageElapsed = 0;
   state.runStartTime = 0; state.runElapsed = 0;
+  state.lastSpaceTime = 0; state.lastPaddleHitTime = 0; state.lastPaddleHitBall = null;
+  state.paddleFlashUntil = 0; state.lastStrikeDialog = 0; state.floatTexts = [];
   resetPaddle();
   buildStage(state.stage);
   resetBalls();
@@ -836,7 +934,7 @@ async function init() {
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
-    if (e.code === 'Space') { e.preventDefault(); launchBall(); }
+    if (e.code === 'Space') { e.preventDefault(); onSpace(); }
   });
   window.addEventListener('keyup', (e) => {
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
