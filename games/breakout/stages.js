@@ -127,18 +127,18 @@ const STAGES = [
       '........II........',
     ] },
 
-  // 9: クラウン👑 — パープル/ロイヤル
+  // 9: クラウン👑 — パープル/ロイヤル（3つの尖塔・左右対称・中央に宝石1個）
   { name: 'Crown',
     palette: ['#D6B8F0', '#C8A8E8', '#DCC2F2', '#B89BE0', '#C0AAEC'],
     rows: [
-      '...h....h....h....',
-      '...h....h....h....',
-      '...hh..hh...hh....',
-      '...hhhhhhhhhhh....',
-      '...HHHHHHHHHHH....',
-      '...HIHHIIHHIHH....',
-      '...HHHHHHHHHHH....',
-      '...hhhhhhhhhhh....',
+      '...h.....h.....h..',
+      '...h.....h.....h..',
+      '...hh...hhh...hh..',
+      '...hhhhhhhhhhhhh..',
+      '...HHHHHHHHHHHHH..',
+      '...HHHHHHIHHHHHH..',
+      '...HHHHHHHHHHHHH..',
+      '...hhhhhhhhhhhhh..',
     ] },
 
   // 10: BOSS パソコンの基板 — エレクトリックグリーン
