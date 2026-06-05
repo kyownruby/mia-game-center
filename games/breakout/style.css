@@ -2,7 +2,7 @@
    ブロックくずし専用スタイル
    ============================================ */
 
-.bk { display: flex; flex-direction: column; min-height: 100vh; min-width: 1300px; }
+.bk { display: flex; flex-direction: column; min-height: 100vh; }
 
 .bk-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -32,6 +32,7 @@
   justify-content: center;
   padding: 24px;
   gap: 24px;
+  flex-wrap: wrap;            /* 狭い時はキャラがキャンバスの下に回り込む */
 }
 .bk-canvas-area {
   display: flex;

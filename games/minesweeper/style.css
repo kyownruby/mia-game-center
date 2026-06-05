@@ -4,7 +4,7 @@
 
 :root { --cell: 34px; }
 
-.ms { display: flex; flex-direction: column; min-height: 100vh; min-width: 1024px; }
+.ms { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* ヘッダー（ソリティアと共通の見た目） */
 .ms-header {
