@@ -56,7 +56,9 @@ button {
 .lobby {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;   /* モバイル等のツールバー込みでも画面ぴったり */
+  overflow: hidden; /* スクロールバーを根本から出さない（中身はJSでズーム調整） */
 }
 
 /* -------- ヘッダー -------- */
@@ -118,12 +120,24 @@ button {
 
 .lobby-main {
   flex: 1;
+  min-height: 0;          /* flex子の縮小を許可（高さ計測の基準にする） */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
   gap: 24px;
+  overflow: hidden;
+}
+
+/* 画面の高さに合わせて丸ごと拡大・縮小する対象（JSでscale適用） */
+.lobby-fit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  transform-origin: center center;
+  will-change: transform;
 }
 
 .mia-stage {

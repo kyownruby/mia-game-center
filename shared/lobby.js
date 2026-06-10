@@ -24,6 +24,31 @@ function speaker() {
   return chars[selectedId];   // ロビーの主役＝選択中アバター
 }
 
+/* ロビー全体を画面の高さに合わせてズーム（縮小）し、見切れ・スクロールを防ぐ */
+let fitRaf = null;
+function fitLobby() {
+  const main = document.querySelector('.lobby-main');
+  const fit = document.getElementById('lobby-fit');
+  if (!main || !fit) return;
+  fit.style.transform = 'none';   // 計測のため一旦等倍に戻す
+  const styles = getComputedStyle(main);
+  const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+  const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+  const availH = main.clientHeight - padY;
+  const availW = main.clientWidth - padX;
+  const needH = fit.offsetHeight;
+  const needW = fit.offsetWidth;
+  if (needH <= 0 || needW <= 0) return;
+  // 縦・横の両方に収まる倍率を採用（拡大はせず等倍を上限に縮小のみ）
+  const scale = Math.min(1, availH / needH, availW / needW);
+  fit.style.transform = `scale(${scale})`;
+}
+
+function scheduleFit() {
+  if (fitRaf) cancelAnimationFrame(fitRaf);
+  fitRaf = requestAnimationFrame(fitLobby);
+}
+
 const messageWindow = {
   el: null,
   textEl: null,
@@ -173,6 +198,7 @@ function renderGameTiles() {
     grid.appendChild(tile);
   });
   renderGamePager();
+  scheduleFit();   // レイアウトが変わるたびにズーム量を再計算
 }
 
 function renderGamePager() {
@@ -295,6 +321,13 @@ async function init() {
   setupAvatarSwitcher();
   setupGamePager();
   showInitialGreeting();
+
+  // 立ち絵の読み込み/失敗で高さが変わるため、その後にも再計算
+  const portraitImg = document.getElementById('mia-portrait-img');
+  portraitImg.addEventListener('load', scheduleFit);
+  portraitImg.addEventListener('error', scheduleFit);
+  window.addEventListener('resize', scheduleFit);
+  scheduleFit();
 }
 
 document.addEventListener('DOMContentLoaded', init);
