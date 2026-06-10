@@ -314,14 +314,26 @@ function renderTurn() {
 }
 
 function renderGameChar() {
-  if (!oppChar) return;
-  document.getElementById('opp-label').textContent = `対戦相手：${oppChar.displayName}`;
-  applyImage(
-    document.getElementById('char-img'),
-    document.getElementById('char-fallback'),
-    ROOT + oppChar.image.portrait
-  );
-  document.getElementById('char-fallback').textContent = oppChar.emoji || '🐈';
+  // アドバイザー＝自分の選択キャラ（右側）
+  if (selfChar) {
+    document.getElementById('self-stage-name').textContent = selfChar.displayName;
+    document.getElementById('char-fallback').textContent = selfChar.emoji || '🐈';
+    applyImage(
+      document.getElementById('char-img'),
+      document.getElementById('char-fallback'),
+      ROOT + selfChar.image.portrait
+    );
+  }
+  // 相手キャラ（反対側＝左）
+  if (oppChar) {
+    document.getElementById('opp-name').textContent = oppChar.displayName;
+    document.getElementById('opp-fallback').textContent = oppChar.emoji || '🐈';
+    applyImage(
+      document.getElementById('opp-img'),
+      document.getElementById('opp-fallback'),
+      ROOT + oppChar.image.portrait
+    );
+  }
 }
 
 function renderAssist() {
@@ -528,8 +540,9 @@ function startGame() {
   game = ShogiEngine.initialState();
   enterGameScreen();
   saveGame();
-  const start = oppChar.lines && oppChar.lines.greeting_first;
-  messageWindow.show(start && start.length ? start[0] : 'よろしくおねがいしますっ！');
+  // アドバイザー（自分キャラ）が応援メッセージ
+  const lines = selfChar && selfChar.lines && (selfChar.lines.greeting_return || selfChar.lines.greeting_first);
+  messageWindow.show(lines && lines.length ? Characters.pickRandom(lines) : 'いっしょにがんばろっ！');
 }
 
 function backToSetup() {
@@ -586,6 +599,10 @@ async function init() {
     if (isReadyToStart()) startGame();
   });
   document.getElementById('char-portrait').addEventListener('click', () => {
+    const lines = selfChar && selfChar.lines && selfChar.lines.click_idle;
+    if (lines && lines.length) messageWindow.show(Characters.pickRandom(lines));
+  });
+  document.getElementById('opp-portrait').addEventListener('click', () => {
     const lines = oppChar && oppChar.lines && oppChar.lines.click_idle;
     if (lines && lines.length) messageWindow.show(Characters.pickRandom(lines));
   });

@@ -207,6 +207,7 @@
   gap: 28px;
   padding: 24px;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
 
@@ -311,14 +312,35 @@
 .result-record { font-size: 13px; color: var(--color-text-soft); margin: 0 0 20px; }
 .setup-record { font-size: 13px; color: var(--color-text-soft); text-align: center; margin: 4px 0 0; }
 
-/* サイド（アシスト＋キャラ） */
-.side-area {
+/* サイド（左：相手 ／ 右：自分＝アドバイザー） */
+.player-side {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: 320px;
+  gap: 16px;
+  width: 240px;
   max-width: 100%;
 }
+.player-side--opp { align-self: center; }
+
+.player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-soft);
+}
+.player-card__role {
+  font-size: 12px;
+  font-weight: bold;
+  color: #2A2438;
+  background: var(--color-pink);
+  border-radius: 999px;
+  padding: 2px 14px;
+}
+.player-card__name { font-weight: bold; font-size: 16px; }
 .assist-box {
   background: var(--bg-surface);
   border: 2px solid var(--color-pink);
@@ -347,5 +369,6 @@
 @media (max-width: 720px) {
   .board { grid-template-columns: repeat(9, 36px); grid-template-rows: repeat(9, 40px); }
   .piece { font-size: 17px; padding-top: 12%; }
-  .side-area { width: 100%; }
+  .player-side { width: 100%; }
+  .shg-char__portrait { width: 120px; height: 120px; }
 }
