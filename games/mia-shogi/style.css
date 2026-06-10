@@ -247,15 +247,25 @@
   position: relative;
   cursor: pointer;
 }
+/* 五角形の駒（本物の将棋の駒のかたち） */
 .piece {
-  font-size: 24px;
+  width: 86%;
+  height: 92%;
+  display: grid;
+  place-items: center;
+  padding-top: 14%;            /* 漢字を駒の下側へ寄せる（実物の字配り） */
+  box-sizing: border-box;
+  font-size: 22px;
   font-weight: bold;
   color: #2A1C0E;
   line-height: 1;
   user-select: none;
+  background: linear-gradient(165deg, #FCE7B6 0%, #F2CD86 55%, #E3B25F 100%);
+  clip-path: polygon(50% 4%, 82% 26%, 92% 96%, 8% 96%, 18% 26%);
+  filter: drop-shadow(0 1px 1px rgba(60, 40, 12, 0.55));
 }
 .piece.is-gote { transform: rotate(180deg); }
-.piece.is-promoted { color: #B22222; }
+.piece.is-promoted { color: #C0392B; }
 
 /* 選択中・移動可能マスのハイライト */
 .cell.is-selected { background: #F4D03F; }
@@ -332,6 +342,6 @@
 
 @media (max-width: 720px) {
   .board { grid-template-columns: repeat(9, 36px); grid-template-rows: repeat(9, 40px); }
-  .piece { font-size: 19px; }
+  .piece { font-size: 17px; padding-top: 12%; }
   .side-area { width: 100%; }
 }
