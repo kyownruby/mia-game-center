@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>ミアの遊び場</title>
-  <link rel="stylesheet" href="shared/style.css?v=18">
+  <link rel="stylesheet" href="shared/style.css?v=19">
 </head>
 <body>
   <div class="lobby">
@@ -29,7 +29,12 @@
         </div>
       </div>
 
-      <div class="game-grid" id="game-grid"></div>
+      <div class="game-carousel">
+        <button class="carousel-arrow" id="games-prev" aria-label="前のページ">‹</button>
+        <div class="game-grid" id="game-grid"></div>
+        <button class="carousel-arrow" id="games-next" aria-label="次のページ">›</button>
+      </div>
+      <div class="game-pager" id="game-pager"></div>
     </main>
   </div>
 
@@ -42,6 +47,6 @@
 
   <script src="shared/storage.js?v=18"></script>
   <script src="shared/characters.js?v=18"></script>
-  <script src="shared/lobby.js?v=18"></script>
+  <script src="shared/lobby.js?v=19"></script>
 </body>
 </html>
