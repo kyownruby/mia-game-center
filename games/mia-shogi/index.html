@@ -36,6 +36,15 @@
           <div class="opp-grid" id="opponent-grid"></div>
         </div>
 
+        <!-- アシスト -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">アシスト</h2>
+          <button class="toggle" id="assist-toggle" aria-pressed="true">
+            <span class="toggle__track"><span class="toggle__knob"></span></span>
+            <span class="toggle__label">ON</span>
+          </button>
+        </div>
+
         <!-- 戦法 -->
         <div class="setup-block" id="strategy-block">
           <h2 class="setup-block__title">戦法を選ぶ（囲いとセット）</h2>
@@ -49,15 +58,6 @@
             <button class="seg__btn" data-difficulty="easy">やさしい</button>
             <button class="seg__btn" data-difficulty="normal">ふつう</button>
           </div>
-        </div>
-
-        <!-- アシスト -->
-        <div class="setup-block">
-          <h2 class="setup-block__title">アシスト</h2>
-          <button class="toggle" id="assist-toggle" aria-pressed="true">
-            <span class="toggle__track"><span class="toggle__knob"></span></span>
-            <span class="toggle__label">ON</span>
-          </button>
         </div>
 
         <button class="pill-btn pill-btn--accent btn-start" id="btn-start" disabled>対局開始</button>
@@ -144,6 +144,6 @@
   <script src="../../shared/characters.js?v=18"></script>
   <script src="engine.js?v=1"></script>
   <script src="strategies.js?v=1"></script>
-  <script src="game.js?v=4"></script>
+  <script src="game.js?v=5"></script>
 </body>
 </html>
