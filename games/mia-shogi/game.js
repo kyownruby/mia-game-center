@@ -98,6 +98,7 @@ function applyImage(imgEl, fbEl, src) {
 function renderSelfCard() {
   if (!selfChar) return;
   document.getElementById('self-name').textContent = selfChar.displayName;
+  document.querySelector('.self-card__icon').style.background = selfChar.theme.primaryColor;
   applyImage(
     document.getElementById('self-img'),
     document.getElementById('self-fallback'),
