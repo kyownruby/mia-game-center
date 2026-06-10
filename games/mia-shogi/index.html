@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ミア将棋｜ミアの遊び場</title>
+  <link rel="stylesheet" href="../../shared/style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="shg">
+
+    <!-- ============ 対局準備画面 ============ -->
+    <section class="shg-setup" id="setup-screen">
+      <header class="shg-header">
+        <div class="shg-title">ミア将棋</div>
+        <a class="pill-btn" href="../../index.html">ロビーへ</a>
+      </header>
+
+      <div class="setup-body">
+        <!-- 自キャラ -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">あなた（ロビー選択中）</h2>
+          <div class="self-card">
+            <span class="self-card__icon">
+              <img id="self-img" alt="" hidden>
+              <span id="self-fallback" hidden>🐈</span>
+            </span>
+            <span class="self-card__name" id="self-name">—</span>
+          </div>
+        </div>
+
+        <!-- 相手キャラ -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">対戦相手を選ぶ</h2>
+          <div class="opp-grid" id="opponent-grid"></div>
+        </div>
+
+        <!-- 戦法 -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">戦法を選ぶ（囲いとセット）</h2>
+          <div class="strategy-list" id="strategy-list"></div>
+        </div>
+
+        <!-- 難易度 -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">難易度</h2>
+          <div class="seg">
+            <button class="seg__btn" data-difficulty="easy">やさしい</button>
+            <button class="seg__btn" data-difficulty="normal">ふつう</button>
+          </div>
+        </div>
+
+        <!-- アシスト -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">アシスト</h2>
+          <button class="toggle" id="assist-toggle" aria-pressed="true">
+            <span class="toggle__track"><span class="toggle__knob"></span></span>
+            <span class="toggle__label">ON</span>
+          </button>
+        </div>
+
+        <button class="pill-btn pill-btn--accent btn-start" id="btn-start" disabled>対局開始</button>
+      </div>
+    </section>
+
+    <!-- ============ 対局画面 ============ -->
+    <section class="shg-game" id="game-screen" hidden>
+      <header class="shg-header">
+        <div class="shg-title" id="opp-label">対戦相手：—</div>
+        <div class="shg-header__buttons">
+          <button class="pill-btn" id="btn-suspend">中断</button>
+          <button class="pill-btn" id="btn-resign">投了</button>
+          <a class="pill-btn" href="../../index.html">ロビーへ</a>
+        </div>
+      </header>
+
+      <div class="game-body">
+        <div class="board-area">
+          <div class="hand hand--gote">
+            <span class="hand__label">相手の持ち駒</span>
+            <div class="hand__pieces" id="hand-gote"></div>
+          </div>
+
+          <div class="board" id="board"></div>
+
+          <div class="hand hand--sente">
+            <span class="hand__label">あなたの持ち駒</span>
+            <div class="hand__pieces" id="hand-sente"></div>
+          </div>
+        </div>
+
+        <aside class="side-area">
+          <div class="assist-box" id="assist-box"></div>
+          <div class="shg-char">
+            <button class="shg-char__portrait" id="char-portrait" aria-label="キャラ">
+              <img id="char-img" alt="" hidden>
+              <span id="char-fallback" hidden>🐈</span>
+            </button>
+            <div class="message-window" id="message-window"><span id="message-text"></span></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="../../shared/storage.js?v=18"></script>
+  <script src="../../shared/characters.js?v=18"></script>
+  <script src="strategies.js?v=1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>
