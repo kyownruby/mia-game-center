@@ -413,7 +413,14 @@ function resolvePromotion(doPromote) {
   commitMove(choice);
 }
 
+/* キャラJSONの将棋セリフを引く（無ければ null） */
+function shogiLine(ch, role, scene) {
+  const s = ch && ch.lines && ch.lines.shogi && ch.lines.shogi[role] && ch.lines.shogi[role][scene];
+  return (s && s.length) ? Characters.pickRandom(s) : null;
+}
+
 function commitMove(move) {
+  const mover = game.turn;   // 指す側（apply前）
   const capturing = move.from && game.board[move.to[0]][move.to[1]];
   game = ShogiEngine.applyMove(game, move);
   selection = null;
@@ -427,12 +434,21 @@ function commitMove(move) {
     endGame(winner, 'checkmate');
     return;
   }
-  if (ShogiEngine.isInCheck(game.board, game.turn)) {
-    messageWindow.show('王手っ！⚔️');
-  } else if (move.promote) {
-    messageWindow.show('成ったよっ✨');
-  } else if (capturing) {
-    messageWindow.show('駒を取ったねっ🐾');
+
+  const gaveCheck = ShogiEngine.isInCheck(game.board, game.turn);
+  if (mover === 'sente') {
+    // あなたの手 → 自分側（アドバイザー）が反応
+    if (gaveCheck || move.promote || capturing) {
+      messageWindow.show(shogiLine(selfChar, 'advisor', 'praise') || (gaveCheck ? '王手っ！⚔️' : 'いいねっ✨'));
+    }
+  } else {
+    // CPUの手 → 相手側（ライバル）が反応
+    let scene = gaveCheck ? 'check' : (capturing ? 'capture' : 'aizuchi');
+    if (scene !== 'aizuchi' || Math.random() < 0.4) {
+      const line = shogiLine(oppChar, 'rival', scene);
+      if (line) oppMsg.show(line);
+      else if (gaveCheck) oppMsg.show('王手！');
+    }
   }
 
   // 相手（後手）の番になったらCPUが指す
@@ -471,7 +487,14 @@ function endGame(winner, reason) {
   document.getElementById('result-record').textContent =
     `通算 ${rec.wins}勝${rec.losses}敗　／　${ownerLabel('gote')}戦 ${vs.w}勝${vs.l}敗`;
   document.getElementById('result-modal').classList.add('is-visible');
-  messageWindow.show(youWon ? 'やったねご主人っ💕✨' : 'うぅ〜、次はがんばろっ🐾');
+  // 自分（アドバイザー）と相手（ライバル）それぞれの口調で
+  if (youWon) {
+    messageWindow.show(shogiLine(selfChar, 'advisor', 'win') || 'やったねっ💕✨');
+    const l = shogiLine(oppChar, 'rival', 'lose'); if (l) oppMsg.show(l);
+  } else {
+    messageWindow.show(shogiLine(selfChar, 'advisor', 'lose') || 'うぅ〜、次はがんばろっ🐾');
+    const l = shogiLine(oppChar, 'rival', 'win'); if (l) oppMsg.show(l);
+  }
 }
 
 /* ---------------- 戦績 ---------------- */
@@ -547,12 +570,10 @@ function startGame() {
   game = ShogiEngine.initialState();
   enterGameScreen();
   saveGame();
-  // アドバイザー（自分キャラ）が応援メッセージ
-  const lines = selfChar && selfChar.lines && (selfChar.lines.greeting_return || selfChar.lines.greeting_first);
-  messageWindow.show(lines && lines.length ? Characters.pickRandom(lines) : 'いっしょにがんばろっ！');
-  // 相手キャラのあいさつ（相手側の窓に）
-  const oppLines = oppChar && oppChar.lines && oppChar.lines.greeting_first;
-  if (oppLines && oppLines.length) oppMsg.show(Characters.pickRandom(oppLines));
+  // アドバイザー（自分キャラ）の応援、相手（ライバル）のあいさつ
+  messageWindow.show(shogiLine(selfChar, 'advisor', 'start') || 'いっしょにがんばろっ！');
+  const oppStart = shogiLine(oppChar, 'rival', 'start');
+  if (oppStart) oppMsg.show(oppStart);
 }
 
 function backToSetup() {
