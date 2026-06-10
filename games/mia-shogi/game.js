@@ -41,6 +41,9 @@ let legalCache = [];        // 現在手番の合法手
 let selection = null;       // { kind:'board', r, c } | { kind:'hand', type }
 let pendingPromotion = null;// { plain, promote } 成り確認待ち
 let gameOver = false;
+let cpuThinking = false;    // CPU思考中は人間の操作をブロック
+
+const RECORD_KEY = 'shogi:record';
 
 const charCache = {};
 let selfChar = null;
@@ -219,10 +222,14 @@ function syncStrategyVisibility() {
   updateStartButton();
 }
 
+// アシストONなら戦法が必須、OFFなら相手だけでOK
+function isReadyToStart() {
+  return setup.assist ? !!(setup.opponentId && setup.strategyId) : !!setup.opponentId;
+}
+
 function updateStartButton() {
   const btn = document.getElementById('btn-start');
-  // アシストONなら戦法が必須、OFFなら相手だけでOK
-  const ready = setup.assist ? (setup.opponentId && setup.strategyId) : setup.opponentId;
+  const ready = isReadyToStart();
   btn.disabled = !ready;
 }
 
@@ -296,6 +303,11 @@ function renderTurn() {
   const el = document.getElementById('turn-indicator');
   if (!el) return;
   if (gameOver) { el.textContent = ''; return; }
+  if (cpuThinking) {
+    el.textContent = `${ownerLabel('gote')}が考え中…🤔`;
+    el.classList.remove('is-check');
+    return;
+  }
   const inCheck = ShogiEngine.isInCheck(game.board, game.turn);
   el.textContent = `${ownerLabel(game.turn)}の番` + (inCheck ? '（王手！）' : '');
   el.classList.toggle('is-check', inCheck);
@@ -334,7 +346,7 @@ function renderAll() {
 
 /* ---------------- 操作 ---------------- */
 function onCellClick(r, c) {
-  if (gameOver || pendingPromotion) return;
+  if (gameOver || pendingPromotion || cpuThinking || game.turn !== 'sente') return;
   const piece = game.board[r][c];
 
   if (selection) {
@@ -351,7 +363,7 @@ function onCellClick(r, c) {
 }
 
 function onHandClick(owner, type) {
-  if (gameOver || pendingPromotion) return;
+  if (gameOver || pendingPromotion || cpuThinking || game.turn !== 'sente') return;
   if (owner !== game.turn) return;
   if (selection && selection.kind === 'hand' && selection.type === type) { clearSelection(); return; }
   selection = { kind: 'hand', type };
@@ -403,21 +415,67 @@ function commitMove(move) {
   } else if (capturing) {
     messageWindow.show('駒を取ったねっ🐾');
   }
+
+  // 相手（後手）の番になったらCPUが指す
+  if (!gameOver && game.turn === 'gote') scheduleCpuMove();
+}
+
+/* ---------------- CPU ---------------- */
+function scheduleCpuMove() {
+  cpuThinking = true;
+  renderTurn();
+  setTimeout(doCpuMove, 500);
+}
+
+function doCpuMove() {
+  if (gameOver) { cpuThinking = false; return; }
+  const move = ShogiCPU.chooseMove(game, setup.difficulty);
+  cpuThinking = false;
+  if (!move) { endGame('sente', 'checkmate'); return; }
+  commitMove(move);
 }
 
 function endGame(winner, reason) {
   gameOver = true;
+  cpuThinking = false;
   Storage.remove(SAVE_KEY);
   renderAll();
   const youWon = winner === 'sente';
+  const rec = recordResult(setup.opponentId, youWon);
   const title = reason === 'resign'
     ? (youWon ? '相手が投了したよっ🎉' : 'お疲れさま、投了だねっ')
     : (youWon ? '詰みっ！あなたの勝ちっ🎉' : '詰まされちゃった…！');
   const sub = youWon ? `${ownerLabel(winner)}の勝利っ💕` : `${ownerLabel(winner)}の勝ちっ`;
+  const vs = rec.vs[setup.opponentId] || { w: 0, l: 0 };
   document.getElementById('result-title').textContent = title;
   document.getElementById('result-sub').textContent = sub;
+  document.getElementById('result-record').textContent =
+    `通算 ${rec.wins}勝${rec.losses}敗　／　${ownerLabel('gote')}戦 ${vs.w}勝${vs.l}敗`;
   document.getElementById('result-modal').classList.add('is-visible');
   messageWindow.show(youWon ? 'やったねご主人っ💕✨' : 'うぅ〜、次はがんばろっ🐾');
+}
+
+/* ---------------- 戦績 ---------------- */
+function loadRecord() {
+  return Storage.get(RECORD_KEY, { wins: 0, losses: 0, vs: {} });
+}
+
+function recordResult(opponentId, youWon) {
+  const r = loadRecord();
+  if (youWon) r.wins++; else r.losses++;
+  if (!r.vs[opponentId]) r.vs[opponentId] = { w: 0, l: 0 };
+  if (youWon) r.vs[opponentId].w++; else r.vs[opponentId].l++;
+  Storage.set(RECORD_KEY, r);
+  return r;
+}
+
+function renderSetupRecord() {
+  const el = document.getElementById('setup-record');
+  if (!el) return;
+  const r = loadRecord();
+  el.textContent = (r.wins || r.losses)
+    ? `これまでの戦績：${r.wins}勝${r.losses}敗`
+    : 'まだ対局していないよっ。最初の一局いこ〜っ🐾';
 }
 
 /* ---------------- セーブ / 再開 ---------------- */
@@ -449,6 +507,7 @@ function loadSave() {
 function enterGameScreen() {
   oppChar = charCache[setup.opponentId] || charCache['mia'];
   gameOver = false;
+  cpuThinking = false;
   selection = null;
   pendingPromotion = null;
   legalCache = ShogiEngine.legalMoves(game);
@@ -460,6 +519,9 @@ function enterGameScreen() {
   renderGameChar();
   renderAssist();
   renderAll();
+
+  // 再開時など、相手の番ならCPUを動かす
+  if (!gameOver && game.turn === 'gote') scheduleCpuMove();
 }
 
 function startGame() {
@@ -474,6 +536,7 @@ function backToSetup() {
   document.getElementById('game-screen').hidden = true;
   document.getElementById('result-modal').classList.remove('is-visible');
   document.getElementById('setup-screen').hidden = false;
+  renderSetupRecord();
 }
 
 function suspendGame() {
@@ -517,9 +580,10 @@ async function init() {
   setupDifficultyButtons();
   setupAssistToggle();
   updateStartButton();
+  renderSetupRecord();
 
   document.getElementById('btn-start').addEventListener('click', () => {
-    if (setup.opponentId && setup.strategyId) startGame();
+    if (isReadyToStart()) startGame();
   });
   document.getElementById('char-portrait').addEventListener('click', () => {
     const lines = oppChar && oppChar.lines && oppChar.lines.click_idle;
