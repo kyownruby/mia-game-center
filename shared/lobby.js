@@ -2,6 +2,7 @@ const GAMES = [
   { id: 'solitaire', name: 'ソリティア', emoji: '🃏', icon: 'assets/icons/games/solitaire.png', url: 'games/solitaire/index.html', ready: true },
   { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', icon: 'assets/icons/games/minesweeper.png', url: 'games/minesweeper/index.html', ready: true },
   { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', icon: 'assets/icons/games/breakout.png', url: 'games/breakout/index.html', ready: true },
+  { id: 'mia-shogi', name: 'ミア将棋', emoji: '♟️', url: 'games/mia-shogi/index.html', ready: true },
   { id: 'comingsoon', name: 'まだまだ追加予定！', emoji: '＋', ready: false, placeholder: true },
 ];
 
