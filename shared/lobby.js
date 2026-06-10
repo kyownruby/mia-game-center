@@ -8,11 +8,17 @@ const GAMES = [
 
 const TYPING_SPEED_MS = 50;
 const AUTO_HIDE_DELAY_MS = 4000;
+const GAMES_PER_PAGE = 4;   // 1ページに表示するゲーム数（縦伸び防止）
 
 const SELECTABLE = ['mia', 'kyown', 'rain', 'shiori'];    // アバターとして選べるキャラ
 
 const chars = {};
 let selectedId = 'mia';
+let gamePage = 0;   // 現在のゲームページ（0始まり）
+
+function gamePageCount() {
+  return Math.max(1, Math.ceil(GAMES.length / GAMES_PER_PAGE));
+}
 
 function speaker() {
   return chars[selectedId];   // ロビーの主役＝選択中アバター
@@ -128,7 +134,11 @@ function selectAvatar(id) {
 function renderGameTiles() {
   const grid = document.getElementById('game-grid');
   grid.innerHTML = '';
-  GAMES.forEach((game) => {
+  const pageCount = gamePageCount();
+  if (gamePage > pageCount - 1) gamePage = pageCount - 1;
+  if (gamePage < 0) gamePage = 0;
+  const start = gamePage * GAMES_PER_PAGE;
+  GAMES.slice(start, start + GAMES_PER_PAGE).forEach((game) => {
     const tile = document.createElement('button');
     tile.className = 'game-tile' + (game.placeholder ? ' is-placeholder' : '');
     tile.dataset.gameId = game.id;
@@ -162,6 +172,37 @@ function renderGameTiles() {
     });
     grid.appendChild(tile);
   });
+  renderGamePager();
+}
+
+function renderGamePager() {
+  const pageCount = gamePageCount();
+  const prev = document.getElementById('games-prev');
+  const next = document.getElementById('games-next');
+  const pager = document.getElementById('game-pager');
+
+  // ゲームが1ページに収まるときは矢印・ドットを隠す
+  const single = pageCount <= 1;
+  prev.hidden = single;
+  next.hidden = single;
+  prev.disabled = gamePage <= 0;
+  next.disabled = gamePage >= pageCount - 1;
+
+  pager.innerHTML = '';
+  if (single) return;
+  for (let i = 0; i < pageCount; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'game-pager__dot' + (i === gamePage ? ' is-active' : '');
+    dot.setAttribute('aria-label', `${i + 1}ページ目`);
+    dot.addEventListener('click', () => goToGamePage(i));
+    pager.appendChild(dot);
+  }
+}
+
+function goToGamePage(page) {
+  const pageCount = gamePageCount();
+  gamePage = Math.min(Math.max(page, 0), pageCount - 1);
+  renderGameTiles();
 }
 
 function renderSpeakerPortrait() {
@@ -218,6 +259,11 @@ function setupAvatarSwitcher() {
   });
 }
 
+function setupGamePager() {
+  document.getElementById('games-prev').addEventListener('click', () => goToGamePage(gamePage - 1));
+  document.getElementById('games-next').addEventListener('click', () => goToGamePage(gamePage + 1));
+}
+
 function showInitialGreeting() {
   const ch = speaker();
   const isFirst = !Storage.get('firstVisit');
@@ -247,6 +293,7 @@ async function init() {
   renderGameTiles();
   setupPortraitClick();
   setupAvatarSwitcher();
+  setupGamePager();
   showInitialGreeting();
 }
 
