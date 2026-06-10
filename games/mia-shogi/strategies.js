@@ -83,7 +83,7 @@ const STRATEGIES = [
     name: '振り飛車穴熊',
     level: 'advanced',
     type: '守り（鉄壁）',
-    castle: '振り飛車穴熊',
+    castle: '穴熊',
     desc: '振り飛車＋超鉄壁の穴熊。固いが組むのに手数がかかる。',
   },
   {
