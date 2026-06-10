@@ -1,25 +1,26 @@
 'use strict';
 
 /* ============================================================
-   ミア将棋 — Phase 1
+   ミア将棋 — Phase 2
    ・対局準備画面（自キャラ / 相手キャラ / 戦法 / 難易度 / アシスト）
-   ・9×9 盤の表示と初期配置
-   ※ ルール判定・駒移動・CPU・AI は後続フェーズで実装。
-     ここでは「見た目と初期配置の確認」までを担当する。
+   ・engine.js（ShogiEngine）と連携して実際に駒を動かせる
+   ・成り確認 / 持ち駒打ち / 王手・詰み / セーブ・再開（ふたり指し）
+   ※ CPU/AI 思考は Phase 3 以降。ここでは両手番を手動操作して検証できる。
    ============================================================ */
 
 const ROOT = '../../';
+const SAVE_KEY = 'shogi:save';
 
 /* 相手として選べるキャラ（自キャラは実行時に除外） */
 const OPPONENTS = ['mia', 'kyown', 'rain', 'shiori'];
 
-/* 駒の漢字表記（成り駒含む） */
 const PIECE_KANJI = {
   P: '歩', L: '香', N: '桂', S: '銀', G: '金', B: '角', R: '飛', K: '玉',
 };
 const PROMOTED_KANJI = {
   P: 'と', L: '杏', N: '圭', S: '全', B: '馬', R: '龍',
 };
+const HAND_KANJI = { R: '飛', B: '角', G: '金', S: '銀', N: '桂', L: '香', P: '歩' };
 
 function glyph(piece) {
   if (!piece) return '';
@@ -31,18 +32,25 @@ const setup = {
   selfId: 'mia',
   opponentId: null,
   strategyId: null,
-  difficulty: 'normal', // easy / normal
+  difficulty: 'normal',
   assist: true,
 };
 
-const state = {
-  board: [],          // 9x9: null か { type, owner:'sente'|'gote', promoted:bool }
-  hands: { sente: {}, gote: {} },
-};
+let game = null;            // ShogiEngine の局面 { board, hands, turn }
+let legalCache = [];        // 現在手番の合法手
+let selection = null;       // { kind:'board', r, c } | { kind:'hand', type }
+let pendingPromotion = null;// { plain, promote } 成り確認待ち
+let gameOver = false;
 
-const charCache = {};   // id -> キャラデータ
+const charCache = {};
 let selfChar = null;
 let oppChar = null;
+
+/* 先手＝あなた / 後手＝相手キャラ */
+function ownerLabel(owner) {
+  if (owner === 'sente') return 'あなた';
+  return oppChar ? oppChar.displayName : '相手';
+}
 
 /* ---------------- キャラ / メッセージ ---------------- */
 const messageWindow = {
@@ -84,28 +92,6 @@ function applyImage(imgEl, fbEl, src) {
   imgEl.onload = () => { imgEl.hidden = false; fbEl.hidden = true; };
   imgEl.onerror = () => { imgEl.hidden = true; fbEl.hidden = false; };
   imgEl.src = src;
-}
-
-/* ---------------- 盤面 初期配置 ---------------- */
-/* row 0 = 上（後手/相手）, row 8 = 下（先手/自分） */
-function buildInitialBoard() {
-  const empty = () => Array.from({ length: 9 }, () => null);
-  const board = Array.from({ length: 9 }, empty);
-  const back = ['L', 'N', 'S', 'G', 'K', 'G', 'S', 'N', 'L'];
-
-  // 後手（上）
-  back.forEach((t, c) => { board[0][c] = { type: t, owner: 'gote', promoted: false }; });
-  board[1][1] = { type: 'R', owner: 'gote', promoted: false }; // 8二 飛
-  board[1][7] = { type: 'B', owner: 'gote', promoted: false }; // 2二 角
-  for (let c = 0; c < 9; c++) board[2][c] = { type: 'P', owner: 'gote', promoted: false };
-
-  // 先手（下）
-  for (let c = 0; c < 9; c++) board[6][c] = { type: 'P', owner: 'sente', promoted: false };
-  board[7][1] = { type: 'B', owner: 'sente', promoted: false }; // 8八 角
-  board[7][7] = { type: 'R', owner: 'sente', promoted: false }; // 2八 飛
-  back.forEach((t, c) => { board[8][c] = { type: t, owner: 'sente', promoted: false }; });
-
-  return board;
 }
 
 /* ---------------- 準備画面 ---------------- */
@@ -230,32 +216,79 @@ function updateStartButton() {
   btn.disabled = !(setup.opponentId && setup.strategyId);
 }
 
-/* ---------------- 対局画面 ---------------- */
+/* ---------------- 盤・持ち駒の描画 ---------------- */
+function targetsForSelection() {
+  if (!selection) return [];
+  if (selection.kind === 'board') {
+    return legalCache.filter((m) => m.from && m.from[0] === selection.r && m.from[1] === selection.c);
+  }
+  return legalCache.filter((m) => m.drop === selection.type);
+}
+
 function renderBoard() {
   const boardEl = document.getElementById('board');
   boardEl.innerHTML = '';
+  const targets = targetsForSelection();
+  const checkSquare = (() => {
+    if (gameOver) return null;
+    if (!ShogiEngine.isInCheck(game.board, game.turn)) return null;
+    return ShogiEngine.findKing(game.board, game.turn);
+  })();
+
   for (let r = 0; r < 9; r++) {
     for (let c = 0; c < 9; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
-      cell.dataset.row = r;
-      cell.dataset.col = c;
-      const piece = state.board[r][c];
+      const piece = game.board[r][c];
+
+      if (selection && selection.kind === 'board' && selection.r === r && selection.c === c) {
+        cell.classList.add('is-selected');
+      }
+      const tgt = targets.find((m) => m.to[0] === r && m.to[1] === c);
+      if (tgt) cell.classList.add(piece ? 'is-capture' : 'is-target');
+      if (checkSquare && checkSquare[0] === r && checkSquare[1] === c) cell.classList.add('is-check');
+
       if (piece) {
         const p = document.createElement('span');
         p.className = 'piece' + (piece.owner === 'gote' ? ' is-gote' : '') + (piece.promoted ? ' is-promoted' : '');
         p.textContent = glyph(piece);
         cell.appendChild(p);
       }
+      cell.addEventListener('click', () => onCellClick(r, c));
       boardEl.appendChild(cell);
     }
   }
 }
 
-function renderHands() {
-  // Phase 1 は持ち駒なし（空表示）。後続フェーズで取った駒を反映する。
-  document.getElementById('hand-gote').innerHTML = '<span class="hand__empty">なし</span>';
-  document.getElementById('hand-sente').innerHTML = '<span class="hand__empty">なし</span>';
+function renderHand(owner) {
+  const el = document.getElementById(owner === 'sente' ? 'hand-sente' : 'hand-gote');
+  el.innerHTML = '';
+  const hand = game.hands[owner];
+  const items = ShogiEngine.HAND_ORDER.filter((t) => hand[t] > 0);
+  if (!items.length) {
+    el.innerHTML = '<span class="hand__empty">なし</span>';
+    return;
+  }
+  items.forEach((t) => {
+    const btn = document.createElement('button');
+    btn.className = 'hand__piece';
+    if (!gameOver && game.turn === owner) btn.classList.add('is-selectable');
+    if (selection && selection.kind === 'hand' && game.turn === owner && selection.type === t) {
+      btn.classList.add('is-selected');
+    }
+    btn.textContent = HAND_KANJI[t] + (hand[t] > 1 ? hand[t] : '');
+    btn.addEventListener('click', () => onHandClick(owner, t));
+    el.appendChild(btn);
+  });
+}
+
+function renderTurn() {
+  const el = document.getElementById('turn-indicator');
+  if (!el) return;
+  if (gameOver) { el.textContent = ''; return; }
+  const inCheck = ShogiEngine.isInCheck(game.board, game.turn);
+  el.textContent = `${ownerLabel(game.turn)}の番` + (inCheck ? '（王手！）' : '');
+  el.classList.toggle('is-check', inCheck);
 }
 
 function renderGameChar() {
@@ -278,30 +311,178 @@ function renderAssist() {
   }
   box.innerHTML =
     `<div class="assist__title">アシスト（${strat ? strat.name : ''}）</div>` +
-    `<div class="assist__body">推奨手の提案はこのあとのフェーズで届くよっ🐾<br>` +
-    `今は${strat ? `「${strat.castle}」` : '囲い'}を意識して並べてみてね💕</div>`;
+    `<div class="assist__body">${strat ? `「${strat.castle}」` : '囲い'}を意識して指してみてね💕<br>` +
+    `AIの推奨手は次のフェーズで届くよっ🐾</div>`;
 }
 
-function startGame() {
-  oppChar = charCache[setup.opponentId];
-  state.board = buildInitialBoard();
-  state.hands = { sente: {}, gote: {} };
+function renderAll() {
+  renderBoard();
+  renderHand('sente');
+  renderHand('gote');
+  renderTurn();
+}
+
+/* ---------------- 操作 ---------------- */
+function onCellClick(r, c) {
+  if (gameOver || pendingPromotion) return;
+  const piece = game.board[r][c];
+
+  if (selection) {
+    const matches = targetsForSelection().filter((m) => m.to[0] === r && m.to[1] === c);
+    if (matches.length === 1) { commitMove(matches[0]); return; }
+    if (matches.length >= 2) { askPromotion(matches); return; }
+    // 着手先でなければ、自分の駒なら選び直し、それ以外は解除
+    if (piece && piece.owner === game.turn) { selectBoard(r, c); return; }
+    clearSelection();
+    return;
+  }
+
+  if (piece && piece.owner === game.turn) selectBoard(r, c);
+}
+
+function onHandClick(owner, type) {
+  if (gameOver || pendingPromotion) return;
+  if (owner !== game.turn) return;
+  if (selection && selection.kind === 'hand' && selection.type === type) { clearSelection(); return; }
+  selection = { kind: 'hand', type };
+  renderAll();
+}
+
+function selectBoard(r, c) {
+  selection = { kind: 'board', r, c };
+  renderAll();
+}
+
+function clearSelection() {
+  selection = null;
+  renderAll();
+}
+
+function askPromotion(matches) {
+  const plain = matches.find((m) => !m.promote);
+  const promote = matches.find((m) => m.promote);
+  pendingPromotion = { plain, promote };
+  document.getElementById('promote-modal').classList.add('is-visible');
+}
+
+function resolvePromotion(doPromote) {
+  const choice = doPromote ? pendingPromotion.promote : pendingPromotion.plain;
+  document.getElementById('promote-modal').classList.remove('is-visible');
+  pendingPromotion = null;
+  commitMove(choice);
+}
+
+function commitMove(move) {
+  const capturing = move.from && game.board[move.to[0]][move.to[1]];
+  game = ShogiEngine.applyMove(game, move);
+  selection = null;
+  legalCache = ShogiEngine.legalMoves(game);
+  saveGame();
+  renderAll();
+
+  // 勝敗・王手の判定（手番は既に相手へ移っている）
+  if (legalCache.length === 0) {
+    const winner = ShogiEngine.opponentOf(game.turn);
+    endGame(winner, 'checkmate');
+    return;
+  }
+  if (ShogiEngine.isInCheck(game.board, game.turn)) {
+    messageWindow.show('王手っ！⚔️');
+  } else if (move.promote) {
+    messageWindow.show('成ったよっ✨');
+  } else if (capturing) {
+    messageWindow.show('駒を取ったねっ🐾');
+  }
+}
+
+function endGame(winner, reason) {
+  gameOver = true;
+  Storage.remove(SAVE_KEY);
+  renderAll();
+  const youWon = winner === 'sente';
+  const title = reason === 'resign'
+    ? (youWon ? '相手が投了したよっ🎉' : 'お疲れさま、投了だねっ')
+    : (youWon ? '詰みっ！あなたの勝ちっ🎉' : '詰まされちゃった…！');
+  const sub = youWon ? `${ownerLabel(winner)}の勝利っ💕` : `${ownerLabel(winner)}の勝ちっ`;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-sub').textContent = sub;
+  document.getElementById('result-modal').classList.add('is-visible');
+  messageWindow.show(youWon ? 'やったねご主人っ💕✨' : 'うぅ〜、次はがんばろっ🐾');
+}
+
+/* ---------------- セーブ / 再開 ---------------- */
+function saveGame() {
+  if (gameOver) return;
+  Storage.set(SAVE_KEY, {
+    board: game.board,
+    hands: game.hands,
+    turn: game.turn,
+    setup: { ...setup },
+  });
+}
+
+function hasSave() {
+  const s = Storage.get(SAVE_KEY, null);
+  return s && s.board && s.setup;
+}
+
+function loadSave() {
+  const s = Storage.get(SAVE_KEY, null);
+  if (!s) return false;
+  Object.assign(setup, s.setup);
+  game = { board: s.board, hands: s.hands, turn: s.turn };
+  enterGameScreen();
+  return true;
+}
+
+/* ---------------- 画面遷移 ---------------- */
+function enterGameScreen() {
+  oppChar = charCache[setup.opponentId] || charCache['mia'];
+  gameOver = false;
+  selection = null;
+  pendingPromotion = null;
+  legalCache = ShogiEngine.legalMoves(game);
 
   document.getElementById('setup-screen').hidden = true;
   document.getElementById('game-screen').hidden = false;
+  document.getElementById('result-modal').classList.remove('is-visible');
 
   renderGameChar();
-  renderBoard();
-  renderHands();
   renderAssist();
+  renderAll();
+}
 
+function startGame() {
+  game = ShogiEngine.initialState();
+  enterGameScreen();
+  saveGame();
   const start = oppChar.lines && oppChar.lines.greeting_first;
   messageWindow.show(start && start.length ? start[0] : 'よろしくおねがいしますっ！');
 }
 
 function backToSetup() {
   document.getElementById('game-screen').hidden = true;
+  document.getElementById('result-modal').classList.remove('is-visible');
   document.getElementById('setup-screen').hidden = false;
+}
+
+function suspendGame() {
+  saveGame();
+  alert('対局を保存したよっ！次に開いたとき続きから遊べるからねっ🐾');
+  window.location.href = ROOT + 'index.html';
+}
+
+function resign() {
+  if (!confirm('投了する？（あなたの負けになるよ）')) return;
+  endGame('gote', 'resign');
+}
+
+/* ---------------- 再開モーダル ---------------- */
+function openResumeModal() {
+  document.getElementById('resume-modal').classList.add('is-visible');
+}
+function closeResumeModal() {
+  document.getElementById('resume-modal').classList.remove('is-visible');
 }
 
 /* ---------------- 初期化 ---------------- */
@@ -316,7 +497,6 @@ async function init() {
   messageWindow.init();
   setup.selfId = Storage.get('selectedCharacter', 'mia');
 
-  // 相手候補＋自キャラをまとめて読み込み
   const ids = Array.from(new Set([...OPPONENTS, setup.selfId]));
   await Promise.all(ids.map((id) => loadChar(id).catch((e) => console.error(id, e))));
   selfChar = charCache[setup.selfId] || charCache['mia'];
@@ -335,8 +515,21 @@ async function init() {
     const lines = oppChar && oppChar.lines && oppChar.lines.click_idle;
     if (lines && lines.length) messageWindow.show(Characters.pickRandom(lines));
   });
-  document.getElementById('btn-resign').addEventListener('click', backToSetup);
-  document.getElementById('btn-suspend').addEventListener('click', backToSetup);
+  document.getElementById('btn-resign').addEventListener('click', resign);
+  document.getElementById('btn-suspend').addEventListener('click', suspendGame);
+
+  // 成り確認モーダル
+  document.getElementById('promote-yes').addEventListener('click', () => resolvePromotion(true));
+  document.getElementById('promote-no').addEventListener('click', () => resolvePromotion(false));
+
+  // リザルトモーダル
+  document.getElementById('btn-again').addEventListener('click', () => { backToSetup(); });
+
+  // 再開モーダル
+  document.getElementById('resume-yes').addEventListener('click', () => { closeResumeModal(); loadSave(); });
+  document.getElementById('resume-no').addEventListener('click', () => { closeResumeModal(); Storage.remove(SAVE_KEY); });
+
+  if (hasSave()) openResumeModal();
 }
 
 document.addEventListener('DOMContentLoaded', init);

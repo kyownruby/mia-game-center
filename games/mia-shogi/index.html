@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ミア将棋｜ミアの遊び場</title>
   <link rel="stylesheet" href="../../shared/style.css?v=18">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <div class="shg">
@@ -82,6 +82,7 @@
             <div class="hand__pieces" id="hand-gote"></div>
           </div>
 
+          <div class="turn-indicator" id="turn-indicator"></div>
           <div class="board" id="board"></div>
 
           <div class="hand hand--sente">
@@ -105,9 +106,44 @@
 
   </div>
 
+  <!-- 成り確認モーダル -->
+  <div class="modal" id="promote-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title">成る？🐾</h2>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="promote-yes">成る</button>
+        <button class="pill-btn" id="promote-no">成らない</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 再開モーダル -->
+  <div class="modal" id="resume-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title">前回の続きから遊ぶ？💕</h2>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="resume-yes">続きから</button>
+        <button class="pill-btn" id="resume-no">最初から</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- リザルトモーダル -->
+  <div class="modal" id="result-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title" id="result-title">対局終了</h2>
+      <p class="result-sub" id="result-sub"></p>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="btn-again">準備画面へ</button>
+        <a class="pill-btn" href="../../index.html">ロビーへ</a>
+      </div>
+    </div>
+  </div>
+
   <script src="../../shared/storage.js?v=18"></script>
   <script src="../../shared/characters.js?v=18"></script>
+  <script src="engine.js?v=1"></script>
   <script src="strategies.js?v=1"></script>
-  <script src="game.js?v=1"></script>
+  <script src="game.js?v=2"></script>
 </body>
 </html>
