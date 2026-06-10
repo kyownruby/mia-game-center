@@ -56,38 +56,45 @@ function ownerLabel(owner) {
 }
 
 /* ---------------- キャラ / メッセージ ---------------- */
-const messageWindow = {
-  el: null, textEl: null, hideTimer: null, typingTimer: null, isTyping: false, fullText: '',
-  init() {
-    this.el = document.getElementById('message-window');
-    this.textEl = document.getElementById('message-text');
-    if (this.el) this.el.addEventListener('click', () => this.skip());
-  },
-  show(text) {
-    if (!text || !this.el) return;
-    this.cancel();
-    this.fullText = text;
-    this.textEl.textContent = '';
-    this.el.classList.add('is-visible');
-    let i = 0;
-    this.isTyping = true;
-    this.typingTimer = setInterval(() => {
-      this.textEl.textContent += this.fullText[i++];
-      if (i >= this.fullText.length) { clearInterval(this.typingTimer); this.typingTimer = null; this.isTyping = false; this.scheduleHide(); }
-    }, 50);
-  },
-  skip() {
-    if (!this.isTyping) return;
-    clearInterval(this.typingTimer); this.typingTimer = null;
-    this.textEl.textContent = this.fullText; this.isTyping = false; this.scheduleHide();
-  },
-  scheduleHide() { this.hideTimer = setTimeout(() => this.el.classList.remove('is-visible'), 4000); },
-  cancel() {
-    if (this.hideTimer) { clearTimeout(this.hideTimer); this.hideTimer = null; }
-    if (this.typingTimer) { clearInterval(this.typingTimer); this.typingTimer = null; }
-    this.isTyping = false;
-  },
-};
+/* 自分側・相手側で別々のメッセージ窓を持てるようにファクトリ化 */
+function createMessageWindow(winId, txtId) {
+  return {
+    winId, txtId,
+    el: null, textEl: null, hideTimer: null, typingTimer: null, isTyping: false, fullText: '',
+    init() {
+      this.el = document.getElementById(this.winId);
+      this.textEl = document.getElementById(this.txtId);
+      if (this.el) this.el.addEventListener('click', () => this.skip());
+    },
+    show(text) {
+      if (!text || !this.el) return;
+      this.cancel();
+      this.fullText = text;
+      this.textEl.textContent = '';
+      this.el.classList.add('is-visible');
+      let i = 0;
+      this.isTyping = true;
+      this.typingTimer = setInterval(() => {
+        this.textEl.textContent += this.fullText[i++];
+        if (i >= this.fullText.length) { clearInterval(this.typingTimer); this.typingTimer = null; this.isTyping = false; this.scheduleHide(); }
+      }, 50);
+    },
+    skip() {
+      if (!this.isTyping) return;
+      clearInterval(this.typingTimer); this.typingTimer = null;
+      this.textEl.textContent = this.fullText; this.isTyping = false; this.scheduleHide();
+    },
+    scheduleHide() { this.hideTimer = setTimeout(() => this.el.classList.remove('is-visible'), 4000); },
+    cancel() {
+      if (this.hideTimer) { clearTimeout(this.hideTimer); this.hideTimer = null; }
+      if (this.typingTimer) { clearInterval(this.typingTimer); this.typingTimer = null; }
+      this.isTyping = false;
+    },
+  };
+}
+
+const messageWindow = createMessageWindow('message-window', 'message-text');   // 自分（アドバイザー）
+const oppMsg = createMessageWindow('opp-message-window', 'opp-message-text');   // 相手
 
 function applyImage(imgEl, fbEl, src) {
   if (!imgEl) return;
@@ -543,6 +550,9 @@ function startGame() {
   // アドバイザー（自分キャラ）が応援メッセージ
   const lines = selfChar && selfChar.lines && (selfChar.lines.greeting_return || selfChar.lines.greeting_first);
   messageWindow.show(lines && lines.length ? Characters.pickRandom(lines) : 'いっしょにがんばろっ！');
+  // 相手キャラのあいさつ（相手側の窓に）
+  const oppLines = oppChar && oppChar.lines && oppChar.lines.greeting_first;
+  if (oppLines && oppLines.length) oppMsg.show(Characters.pickRandom(oppLines));
 }
 
 function backToSetup() {
@@ -581,6 +591,7 @@ async function loadChar(id) {
 
 async function init() {
   messageWindow.init();
+  oppMsg.init();
   setup.selfId = Storage.get('selectedCharacter', 'mia');
 
   const ids = Array.from(new Set([...OPPONENTS, setup.selfId]));
@@ -604,7 +615,7 @@ async function init() {
   });
   document.getElementById('opp-portrait').addEventListener('click', () => {
     const lines = oppChar && oppChar.lines && oppChar.lines.click_idle;
-    if (lines && lines.length) messageWindow.show(Characters.pickRandom(lines));
+    if (lines && lines.length) oppMsg.show(Characters.pickRandom(lines));
   });
   document.getElementById('btn-resign').addEventListener('click', resign);
   document.getElementById('btn-suspend').addEventListener('click', suspendGame);
