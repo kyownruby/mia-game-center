@@ -207,14 +207,23 @@ function setupAssistToggle() {
     toggle.classList.toggle('is-on', setup.assist);
     toggle.setAttribute('aria-pressed', String(setup.assist));
     toggle.querySelector('.toggle__label').textContent = setup.assist ? 'ON' : 'OFF';
+    syncStrategyVisibility();
   };
   sync();
   toggle.addEventListener('click', () => { setup.assist = !setup.assist; sync(); });
 }
 
+/* アシストOFF＝戦法なし（自由対局）。戦法ブロックの表示と開始条件を連動させる */
+function syncStrategyVisibility() {
+  document.getElementById('strategy-block').hidden = !setup.assist;
+  updateStartButton();
+}
+
 function updateStartButton() {
   const btn = document.getElementById('btn-start');
-  btn.disabled = !(setup.opponentId && setup.strategyId);
+  // アシストONなら戦法が必須、OFFなら相手だけでOK
+  const ready = setup.assist ? (setup.opponentId && setup.strategyId) : setup.opponentId;
+  btn.disabled = !ready;
 }
 
 /* ---------------- 盤・持ち駒の描画 ---------------- */
