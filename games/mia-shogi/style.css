@@ -293,7 +293,9 @@
 .hand__piece.is-selectable:hover { background: var(--color-milky); }
 .hand__piece.is-selected { background: var(--color-pink); color: #2A2438; }
 
-.result-sub { font-size: 15px; color: var(--color-text); margin: 0 0 20px; }
+.result-sub { font-size: 15px; color: var(--color-text); margin: 0 0 8px; }
+.result-record { font-size: 13px; color: var(--color-text-soft); margin: 0 0 20px; }
+.setup-record { font-size: 13px; color: var(--color-text-soft); text-align: center; margin: 4px 0 0; }
 
 /* サイド（アシスト＋キャラ） */
 .side-area {
