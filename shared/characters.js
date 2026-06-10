@@ -4,7 +4,7 @@
  */
 const Characters = (() => {
   const cache = {};
-  const ASSET_V = '18'; // キャッシュ対策バージョン（更新時に上げる）
+  const ASSET_V = '19'; // キャッシュ対策バージョン（更新時に上げる）（将棋セリフ追加）
 
   async function load(id, basePath = 'characters/') {
     if (cache[id]) return cache[id];
