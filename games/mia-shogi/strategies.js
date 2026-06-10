@@ -72,7 +72,7 @@ const STRATEGIES = [
     name: '角換わり',
     level: 'intermediate',
     type: '攻撃〜バランス',
-    castle: '矢倉囲い／腰掛け銀',
+    castle: '矢倉囲い',
     desc: '序盤に角を交換してから戦うスピーディーな居飛車戦法。',
   },
 
@@ -101,7 +101,7 @@ const STRATEGIES = [
     name: '右四間飛車',
     level: 'advanced',
     type: '攻め（一点突破）',
-    castle: '（簡易な囲い）',
+    castle: '舟囲い',
     desc: '飛車・角・銀・桂を一点に集中させてブチ抜く超攻撃的戦法。',
   },
 ];
