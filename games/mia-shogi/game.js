@@ -143,11 +143,7 @@ function renderOpponentOptions() {
     name.className = 'opp-card__name';
     name.textContent = ch.displayName;
 
-    const note = document.createElement('span');
-    note.className = 'opp-card__note';
-    note.textContent = pickGreeting(ch);
-
-    btn.append(icon, name, note);
+    btn.append(icon, name);
     btn.addEventListener('click', () => {
       setup.opponentId = id;
       renderOpponentOptions();
@@ -155,12 +151,6 @@ function renderOpponentOptions() {
     });
     grid.appendChild(btn);
   });
-}
-
-function pickGreeting(ch) {
-  const lines = ch.lines && (ch.lines.greeting_return || ch.lines.greeting_first);
-  if (lines && lines.length) return lines[0];
-  return 'よろしくねっ';
 }
 
 function renderStrategyOptions() {
