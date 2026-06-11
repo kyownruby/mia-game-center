@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ミア将棋｜ミアの遊び場</title>
+  <link rel="stylesheet" href="../../shared/style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=21">
+</head>
+<body>
+  <div class="shg">
+
+    <!-- ============ 対局準備画面 ============ -->
+    <section class="shg-setup" id="setup-screen">
+      <header class="shg-header">
+        <div class="shg-title">ミア将棋</div>
+        <a class="pill-btn" href="../../index.html">ロビーへ</a>
+      </header>
+
+      <div class="setup-body">
+        <!-- 自キャラ -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">あなた（ロビー選択中）</h2>
+          <div class="self-card">
+            <span class="self-card__icon">
+              <img id="self-img" alt="" hidden>
+              <span id="self-fallback" hidden>🐈</span>
+            </span>
+            <span class="self-card__name" id="self-name">—</span>
+          </div>
+        </div>
+
+        <!-- 相手キャラ -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">対戦相手を選ぶ</h2>
+          <div class="opp-grid" id="opponent-grid"></div>
+        </div>
+
+        <!-- アシスト -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">アシスト</h2>
+          <button class="toggle" id="assist-toggle" aria-pressed="true">
+            <span class="toggle__track"><span class="toggle__knob"></span></span>
+            <span class="toggle__label">ON</span>
+          </button>
+        </div>
+
+        <!-- 戦法 -->
+        <div class="setup-block" id="strategy-block">
+          <h2 class="setup-block__title">戦法を選ぶ（囲いとセット）</h2>
+          <div class="strategy-list" id="strategy-list"></div>
+        </div>
+
+        <!-- 難易度 -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">難易度</h2>
+          <div class="seg">
+            <button class="seg__btn" data-difficulty="easy">やさしい</button>
+            <button class="seg__btn" data-difficulty="normal">ふつう</button>
+          </div>
+        </div>
+
+        <!-- AI設定（任意） -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">AI連携（任意）</h2>
+          <p class="ai-help">自分のClaude APIキーを入れると、CPUの一手やアシストがAIになるよ。未設定でもJS CPUで遊べるっ🐾（キーはこの端末のブラウザにだけ保存）</p>
+          <div class="ai-key-row">
+            <input type="password" id="ai-key-input" class="ai-key-input" placeholder="sk-ant-... を貼り付け" autocomplete="off">
+            <button class="pill-btn pill-btn--accent" id="ai-key-save">保存</button>
+            <button class="pill-btn" id="ai-key-clear">削除</button>
+          </div>
+          <p class="ai-status" id="ai-status"></p>
+        </div>
+
+        <p class="setup-record" id="setup-record"></p>
+
+        <button class="pill-btn pill-btn--accent btn-start" id="btn-start" disabled>対局開始</button>
+      </div>
+    </section>
+
+    <!-- ============ 対局画面 ============ -->
+    <section class="shg-game" id="game-screen" hidden>
+      <header class="shg-header">
+        <div class="shg-title">ミア将棋</div>
+        <div class="shg-header__buttons">
+          <button class="pill-btn" id="btn-suspend">中断</button>
+          <button class="pill-btn" id="btn-resign">投了</button>
+          <a class="pill-btn" href="../../index.html">ロビーへ</a>
+        </div>
+      </header>
+
+      <div class="game-body">
+        <div class="shg-fit" id="game-fit">
+        <!-- 相手キャラ（反対側） -->
+        <aside class="player-side player-side--opp">
+          <div class="player-card">
+            <span class="player-card__role">相手</span>
+            <button class="shg-char__portrait" id="opp-portrait" aria-label="相手キャラ">
+              <img id="opp-img" alt="" hidden>
+              <span id="opp-fallback" hidden>🐈</span>
+            </button>
+            <span class="player-card__name" id="opp-name">—</span>
+          </div>
+          <div class="message-window" id="opp-message-window"><span id="opp-message-text"></span></div>
+        </aside>
+
+        <div class="board-area">
+          <div class="hand hand--gote">
+            <span class="hand__label">相手の持ち駒</span>
+            <div class="hand__pieces" id="hand-gote"></div>
+          </div>
+
+          <div class="turn-indicator" id="turn-indicator"></div>
+          <div class="board" id="board"></div>
+
+          <div class="hand hand--sente">
+            <span class="hand__label">あなたの持ち駒</span>
+            <div class="hand__pieces" id="hand-sente"></div>
+          </div>
+        </div>
+
+        <!-- 自分キャラ（アドバイザー） -->
+        <aside class="player-side player-side--self">
+          <div class="assist-box" id="assist-box"></div>
+          <div class="shg-char">
+            <span class="player-card__role">あなた</span>
+            <button class="shg-char__portrait" id="char-portrait" aria-label="あなたのキャラ">
+              <img id="char-img" alt="" hidden>
+              <span id="char-fallback" hidden>🐈</span>
+            </button>
+            <span class="player-card__name" id="self-stage-name">—</span>
+            <div class="message-window" id="message-window"><span id="message-text"></span></div>
+          </div>
+        </aside>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 成り確認モーダル -->
+  <div class="modal" id="promote-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title">成る？🐾</h2>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="promote-yes">成る</button>
+        <button class="pill-btn" id="promote-no">成らない</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 再開モーダル -->
+  <div class="modal" id="resume-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title">前回の続きから遊ぶ？💕</h2>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="resume-yes">続きから</button>
+        <button class="pill-btn" id="resume-no">最初から</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- リザルトモーダル -->
+  <div class="modal" id="result-modal">
+    <div class="modal__inner">
+      <h2 class="modal__title" id="result-title">対局終了</h2>
+      <p class="result-sub" id="result-sub"></p>
+      <p class="result-record" id="result-record"></p>
+      <div class="modal__options">
+        <button class="pill-btn pill-btn--accent" id="btn-again">準備画面へ</button>
+        <a class="pill-btn" href="../../index.html">ロビーへ</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../shared/storage.js?v=21"></script>
+  <script src="../../shared/characters.js?v=21"></script>
+  <script src="engine.js?v=21"></script>
+  <script src="cpu.js?v=21"></script>
+  <script src="ai.js?v=21"></script>
+  <script src="strategies.js?v=21"></script>
+  <script src="game.js?v=21"></script>
+</body>
+</html>

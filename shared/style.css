@@ -56,7 +56,9 @@ button {
 .lobby {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;   /* モバイル等のツールバー込みでも画面ぴったり */
+  overflow: hidden; /* スクロールバーを根本から出さない（中身はJSでズーム調整） */
 }
 
 /* -------- ヘッダー -------- */
@@ -118,12 +120,24 @@ button {
 
 .lobby-main {
   flex: 1;
+  min-height: 0;          /* flex子の縮小を許可（高さ計測の基準にする） */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
   gap: 24px;
+  overflow: hidden;
+}
+
+/* 画面の高さに合わせて丸ごと拡大・縮小する対象（JSでscale適用） */
+.lobby-fit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  transform-origin: center center;
+  will-change: transform;
 }
 
 .mia-stage {
@@ -207,11 +221,60 @@ button {
 
 /* -------- ゲームタイル -------- */
 
+/* ゲームは1ページ4枚・常に1段（縦伸び＝スクロール防止） */
+.game-carousel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
 .game-grid {
   display: grid;
   grid-template-columns: repeat(4, 180px);
+  grid-template-rows: 180px;
   gap: 24px;
-  margin-top: 20px;
+}
+
+.carousel-arrow {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  color: var(--color-pink-deep);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: bold;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  flex: none;
+}
+
+.carousel-arrow:hover { transform: translateY(-2px); }
+.carousel-arrow:disabled { opacity: 0.25; cursor: default; transform: none; }
+
+.game-pager {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  min-height: 12px;
+}
+
+.game-pager__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-border);
+  padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.game-pager__dot.is-active {
+  background: var(--color-pink);
+  transform: scale(1.2);
 }
 
 .game-tile {

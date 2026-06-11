@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>ミアの遊び場</title>
-  <link rel="stylesheet" href="shared/style.css?v=19">
+  <link rel="stylesheet" href="shared/style.css?v=21">
 </head>
 <body>
   <div class="lobby">
@@ -19,17 +19,24 @@
     </header>
 
     <main class="lobby-main">
-      <div class="mia-stage">
-        <button class="mia-portrait" id="mia-portrait" aria-label="ミア">
-          <img class="mia-portrait__img" id="mia-portrait-img" alt="ミア" hidden>
-          <span class="mia-portrait__fallback" id="mia-portrait-fallback" hidden>🐈</span>
-        </button>
-        <div class="message-window" id="message-window">
-          <span id="message-text"></span>
+      <div class="lobby-fit" id="lobby-fit">
+        <div class="mia-stage">
+          <button class="mia-portrait" id="mia-portrait" aria-label="ミア">
+            <img class="mia-portrait__img" id="mia-portrait-img" alt="ミア" hidden>
+            <span class="mia-portrait__fallback" id="mia-portrait-fallback" hidden>🐈</span>
+          </button>
+          <div class="message-window" id="message-window">
+            <span id="message-text"></span>
+          </div>
         </div>
-      </div>
 
-      <div class="game-grid" id="game-grid"></div>
+        <div class="game-carousel">
+          <button class="carousel-arrow" id="games-prev" aria-label="前のページ">‹</button>
+          <div class="game-grid" id="game-grid"></div>
+          <button class="carousel-arrow" id="games-next" aria-label="次のページ">›</button>
+        </div>
+        <div class="game-pager" id="game-pager"></div>
+      </div>
     </main>
   </div>
 
@@ -40,8 +47,8 @@
     </div>
   </div>
 
-  <script src="shared/storage.js?v=19"></script>
-  <script src="shared/characters.js?v=19"></script>
-  <script src="shared/lobby.js?v=19"></script>
+  <script src="shared/storage.js?v=21"></script>
+  <script src="shared/characters.js?v=21"></script>
+  <script src="shared/lobby.js?v=21"></script>
 </body>
 </html>

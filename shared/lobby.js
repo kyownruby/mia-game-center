@@ -2,19 +2,51 @@ const GAMES = [
   { id: 'solitaire', name: 'ソリティア', emoji: '🃏', icon: 'assets/icons/games/solitaire.png', url: 'games/solitaire/index.html', ready: true },
   { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', icon: 'assets/icons/games/minesweeper.png', url: 'games/minesweeper/index.html', ready: true },
   { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', icon: 'assets/icons/games/breakout.png', url: 'games/breakout/index.html', ready: true },
+  { id: 'mia-shogi', name: 'ミア将棋', emoji: '♟️', icon: 'assets/icons/games/mia-shogi.png', url: 'games/mia-shogi/index.html', ready: true },
   { id: 'comingsoon', name: 'まだまだ追加予定！', emoji: '＋', ready: false, placeholder: true },
 ];
 
 const TYPING_SPEED_MS = 50;
 const AUTO_HIDE_DELAY_MS = 4000;
+const GAMES_PER_PAGE = 4;   // 1ページに表示するゲーム数（縦伸び防止）
 
 const SELECTABLE = ['mia', 'kyown', 'rain', 'shiori'];    // アバターとして選べるキャラ
 
 const chars = {};
 let selectedId = 'mia';
+let gamePage = 0;   // 現在のゲームページ（0始まり）
+
+function gamePageCount() {
+  return Math.max(1, Math.ceil(GAMES.length / GAMES_PER_PAGE));
+}
 
 function speaker() {
   return chars[selectedId];   // ロビーの主役＝選択中アバター
+}
+
+/* ロビー全体を画面の高さに合わせてズーム（縮小）し、見切れ・スクロールを防ぐ */
+let fitRaf = null;
+function fitLobby() {
+  const main = document.querySelector('.lobby-main');
+  const fit = document.getElementById('lobby-fit');
+  if (!main || !fit) return;
+  fit.style.transform = 'none';   // 計測のため一旦等倍に戻す
+  const styles = getComputedStyle(main);
+  const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+  const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+  const availH = main.clientHeight - padY;
+  const availW = main.clientWidth - padX;
+  const needH = fit.offsetHeight;
+  const needW = fit.offsetWidth;
+  if (needH <= 0 || needW <= 0) return;
+  // 縦・横の両方に収まる倍率を採用（拡大はせず等倍を上限に縮小のみ）
+  const scale = Math.min(1, availH / needH, availW / needW);
+  fit.style.transform = `scale(${scale})`;
+}
+
+function scheduleFit() {
+  if (fitRaf) cancelAnimationFrame(fitRaf);
+  fitRaf = requestAnimationFrame(fitLobby);
 }
 
 const messageWindow = {
@@ -127,7 +159,11 @@ function selectAvatar(id) {
 function renderGameTiles() {
   const grid = document.getElementById('game-grid');
   grid.innerHTML = '';
-  GAMES.forEach((game) => {
+  const pageCount = gamePageCount();
+  if (gamePage > pageCount - 1) gamePage = pageCount - 1;
+  if (gamePage < 0) gamePage = 0;
+  const start = gamePage * GAMES_PER_PAGE;
+  GAMES.slice(start, start + GAMES_PER_PAGE).forEach((game) => {
     const tile = document.createElement('button');
     tile.className = 'game-tile' + (game.placeholder ? ' is-placeholder' : '');
     tile.dataset.gameId = game.id;
@@ -161,6 +197,38 @@ function renderGameTiles() {
     });
     grid.appendChild(tile);
   });
+  renderGamePager();
+  scheduleFit();   // レイアウトが変わるたびにズーム量を再計算
+}
+
+function renderGamePager() {
+  const pageCount = gamePageCount();
+  const prev = document.getElementById('games-prev');
+  const next = document.getElementById('games-next');
+  const pager = document.getElementById('game-pager');
+
+  // ゲームが1ページに収まるときは矢印・ドットを隠す
+  const single = pageCount <= 1;
+  prev.hidden = single;
+  next.hidden = single;
+  prev.disabled = gamePage <= 0;
+  next.disabled = gamePage >= pageCount - 1;
+
+  pager.innerHTML = '';
+  if (single) return;
+  for (let i = 0; i < pageCount; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'game-pager__dot' + (i === gamePage ? ' is-active' : '');
+    dot.setAttribute('aria-label', `${i + 1}ページ目`);
+    dot.addEventListener('click', () => goToGamePage(i));
+    pager.appendChild(dot);
+  }
+}
+
+function goToGamePage(page) {
+  const pageCount = gamePageCount();
+  gamePage = Math.min(Math.max(page, 0), pageCount - 1);
+  renderGameTiles();
 }
 
 function renderSpeakerPortrait() {
@@ -217,6 +285,11 @@ function setupAvatarSwitcher() {
   });
 }
 
+function setupGamePager() {
+  document.getElementById('games-prev').addEventListener('click', () => goToGamePage(gamePage - 1));
+  document.getElementById('games-next').addEventListener('click', () => goToGamePage(gamePage + 1));
+}
+
 function showInitialGreeting() {
   const ch = speaker();
   const isFirst = !Storage.get('firstVisit');
@@ -246,7 +319,15 @@ async function init() {
   renderGameTiles();
   setupPortraitClick();
   setupAvatarSwitcher();
+  setupGamePager();
   showInitialGreeting();
+
+  // 立ち絵の読み込み/失敗で高さが変わるため、その後にも再計算
+  const portraitImg = document.getElementById('mia-portrait-img');
+  portraitImg.addEventListener('load', scheduleFit);
+  portraitImg.addEventListener('error', scheduleFit);
+  window.addEventListener('resize', scheduleFit);
+  scheduleFit();
 }
 
 document.addEventListener('DOMContentLoaded', init);
