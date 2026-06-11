@@ -510,6 +510,35 @@ function renderSetupRecord() {
     : 'まだ対局していないよっ。最初の一局いこ〜っ🐾';
 }
 
+/* ---------------- AIキー設定 ---------------- */
+function renderAiStatus() {
+  const el = document.getElementById('ai-status');
+  if (!el || typeof ShogiAI === 'undefined') return;
+  const on = ShogiAI.hasKey();
+  el.textContent = on
+    ? `AI連携：ON（${ShogiAI.AI_MODEL}）。CPUの一手とアシストがAIになるよっ✨`
+    : 'AI連携：OFF（キー未設定）。JS CPUとセリフで遊べるよっ🐾';
+  el.classList.toggle('is-on', on);
+}
+
+function setupAiKeyControls() {
+  if (typeof ShogiAI === 'undefined') return;
+  const input = document.getElementById('ai-key-input');
+  document.getElementById('ai-key-save').addEventListener('click', () => {
+    const v = (input.value || '').trim();
+    if (!v) { alert('APIキーを入力してねっ🐾'); return; }
+    ShogiAI.setKey(v);
+    input.value = '';
+    renderAiStatus();
+    alert('APIキーを保存したよっ！この端末のブラウザだけに保存されるからねっ💕');
+  });
+  document.getElementById('ai-key-clear').addEventListener('click', () => {
+    ShogiAI.clearKey();
+    input.value = '';
+    renderAiStatus();
+  });
+}
+
 /* ---------------- セーブ / 再開 ---------------- */
 function saveGame() {
   if (gameOver) return;
@@ -616,6 +645,8 @@ async function init() {
   setupAssistToggle();
   updateStartButton();
   renderSetupRecord();
+  setupAiKeyControls();
+  renderAiStatus();
 
   document.getElementById('btn-start').addEventListener('click', () => {
     if (isReadyToStart()) startGame();
