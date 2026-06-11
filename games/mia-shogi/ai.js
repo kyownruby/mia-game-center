@@ -137,7 +137,8 @@
       movesList(state, legalMoves),
       '',
       '次のJSON形式のみで返答してください。前置きやMarkdownのコードブロックは不要です。',
-      `{"moveIndex": <推奨する合法手の番号(0〜${legalMoves.length - 1})>, "reason": "<あなたの口調での短い解説（なぜこの手か）>"}`,
+      'reasonは必ず30文字以内・1文で、あなたの口調のまま簡潔に。',
+      `{"moveIndex": <推奨する合法手の番号(0〜${legalMoves.length - 1})>, "reason": "<30文字以内の一言アドバイス>"}`,
     ].join('\n');
   }
 
