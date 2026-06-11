@@ -393,7 +393,7 @@ async function maybeAutoHint() {
   const myId = hintReqId;
   const strat = STRATEGIES.find((s) => s.id === setup.strategyId);
   hintLoading = true;
-  messageWindow.show('うーん、いい手を考えるね…🤔');
+  messageWindow.show(shogiLine(selfChar, 'advisor', 'thinking') || 'うーん、考えるね…🤔');
   const res = await ShogiAI.suggestMove(game, legalCache, {
     selfName: selfChar ? selfChar.displayName : 'アドバイザー',
     tone: selfChar ? selfChar.description : '',
