@@ -102,8 +102,8 @@ const oppMsg = createMessageWindow('opp-message-window', 'opp-message-text');   
 function applyImage(imgEl, fbEl, src) {
   if (!imgEl) return;
   fbEl.hidden = true;
-  imgEl.onload = () => { imgEl.hidden = false; fbEl.hidden = true; };
-  imgEl.onerror = () => { imgEl.hidden = true; fbEl.hidden = false; };
+  imgEl.onload = () => { imgEl.hidden = false; fbEl.hidden = true; scheduleFitGame(); };
+  imgEl.onerror = () => { imgEl.hidden = true; fbEl.hidden = false; scheduleFitGame(); };
   imgEl.src = src;
 }
 
@@ -348,20 +348,7 @@ function renderAssist() {
     box.innerHTML = '<span class="assist__off">アシストOFF</span>';
     return;
   }
-  const aiOn = typeof ShogiAI !== 'undefined' && ShogiAI.hasKey();
-  box.innerHTML =
-    `<div class="assist__title">アシスト（${strat ? strat.name : ''}）</div>` +
-    `<div class="assist__body">${strat ? `「${strat.castle}」` : '囲い'}を意識して指してみてね💕<br>` +
-    (aiOn ? '「ヒントをもらう」でAIが推奨手を教えてくれるよっ🐾' : 'APIキーを設定するとAIが推奨手を出せるよっ🐾') +
-    '</div>';
-}
-
-function updateHintButton() {
-  const btn = document.getElementById('btn-hint');
-  if (!btn) return;
-  btn.hidden = !setup.assist;
-  btn.disabled = hintLoading || cpuThinking || gameOver || game.turn !== 'sente';
-  btn.textContent = hintLoading ? '考え中…🤔' : 'ヒントをもらう✨';
+  box.innerHTML = `<div class="assist__title">アシスト：${strat ? strat.name : '自由'} / ${strat ? strat.castle : '自由'}</div>`;
 }
 
 function renderAll() {
@@ -369,19 +356,43 @@ function renderAll() {
   renderHand('sente');
   renderHand('gote');
   renderTurn();
-  updateHintButton();
+  scheduleFitGame();
 }
 
-/* ---------------- AIアシスト（ヒント） ---------------- */
-async function requestHint() {
-  if (gameOver || cpuThinking || hintLoading || pendingPromotion || game.turn !== 'sente') return;
-  if (typeof ShogiAI === 'undefined' || !ShogiAI.hasKey()) {
-    messageWindow.show('APIキーを設定するとAIが推奨手を教えてくれるよっ🐾（準備画面のAI連携）');
-    return;
-  }
+/* 対局画面を画面サイズに合わせて丸ごと縮小（ロビーと同方式・拡大はしない） */
+let fitRaf = null;
+function fitGame() {
+  const main = document.querySelector('.game-body');
+  const fit = document.getElementById('game-fit');
+  if (!main || !fit || main.offsetParent === null) return;
+  fit.style.transform = 'none';   // 計測のため一旦等倍へ
+  const styles = getComputedStyle(main);
+  const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+  const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+  const availH = main.clientHeight - padY;
+  const availW = main.clientWidth - padX;
+  const needH = fit.offsetHeight;
+  const needW = fit.offsetWidth;
+  if (needH <= 0 || needW <= 0) return;
+  const scale = Math.min(1, availH / needH, availW / needW);
+  fit.style.transform = `scale(${scale})`;
+}
+function scheduleFitGame() {
+  if (fitRaf) cancelAnimationFrame(fitRaf);
+  fitRaf = requestAnimationFrame(fitGame);
+}
+
+/* ---------------- AIアシスト（自分の番で推奨手を自動表示） ---------------- */
+// 着手等で状況が変わったら古い応答を捨てるためのトークン
+let hintReqId = 0;
+
+async function maybeAutoHint() {
+  hintReqId++;
+  if (!setup.assist || gameOver || game.turn !== 'sente') return;
+  if (typeof ShogiAI === 'undefined' || !ShogiAI.hasKey()) return;
+  const myId = hintReqId;
   const strat = STRATEGIES.find((s) => s.id === setup.strategyId);
   hintLoading = true;
-  updateHintButton();
   messageWindow.show('うーん、いい手を考えるね…🤔');
   const res = await ShogiAI.suggestMove(game, legalCache, {
     selfName: selfChar ? selfChar.displayName : 'アドバイザー',
@@ -390,20 +401,18 @@ async function requestHint() {
     castle: strat ? strat.castle : '自由',
   });
   hintLoading = false;
-  if (gameOver) { updateHintButton(); return; }
+  // 取得中に着手・投了・手番変化があったら破棄
+  if (myId !== hintReqId || gameOver || game.turn !== 'sente') return;
   if (res) {
     hintMove = legalCache[res.moveIndex];
     renderAll();
     messageWindow.show(res.reason || 'この手がいいと思うっ！✨');
-  } else {
-    updateHintButton();
-    messageWindow.show('むむ、今はうまく思いつかないや…ごめんね💦');
   }
 }
 
 /* ---------------- 操作 ---------------- */
 function onCellClick(r, c) {
-  if (gameOver || pendingPromotion || cpuThinking || hintLoading || game.turn !== 'sente') return;
+  if (gameOver || pendingPromotion || cpuThinking || game.turn !== 'sente') return;
   const piece = game.board[r][c];
 
   if (selection) {
@@ -420,7 +429,7 @@ function onCellClick(r, c) {
 }
 
 function onHandClick(owner, type) {
-  if (gameOver || pendingPromotion || cpuThinking || hintLoading || game.turn !== 'sente') return;
+  if (gameOver || pendingPromotion || cpuThinking || game.turn !== 'sente') return;
   if (owner !== game.turn) return;
   if (selection && selection.kind === 'hand' && selection.type === type) { clearSelection(); return; }
   selection = { kind: 'hand', type };
@@ -495,8 +504,10 @@ function commitMove(move) {
     }
   }
 
-  // 相手（後手）の番になったらCPUが指す
-  if (!gameOver && game.turn === 'gote') scheduleCpuMove();
+  if (!gameOver) {
+    if (game.turn === 'gote') scheduleCpuMove();        // 相手（後手）の番 → CPUが指す
+    else if (mover === 'gote') maybeAutoHint();          // 自分（先手）の番が回ってきた → 推奨手を自動表示
+  }
 }
 
 /* ---------------- CPU ---------------- */
@@ -654,8 +665,10 @@ function enterGameScreen() {
   renderAssist();
   renderAll();
 
-  // 再開時など、相手の番ならCPUを動かす
-  if (!gameOver && game.turn === 'gote') scheduleCpuMove();
+  if (!gameOver) {
+    if (game.turn === 'gote') scheduleCpuMove();   // 再開時など、相手の番ならCPUを動かす
+    else maybeAutoHint();                          // 自分の番なら推奨手を自動表示
+  }
 }
 
 function startGame() {
@@ -734,7 +747,7 @@ async function init() {
   });
   document.getElementById('btn-resign').addEventListener('click', resign);
   document.getElementById('btn-suspend').addEventListener('click', suspendGame);
-  document.getElementById('btn-hint').addEventListener('click', requestHint);
+  window.addEventListener('resize', scheduleFitGame);
 
   // 成り確認モーダル
   document.getElementById('promote-yes').addEventListener('click', () => resolvePromotion(true));
