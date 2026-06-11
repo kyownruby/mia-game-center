@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ミア将棋｜ミアの遊び場</title>
   <link rel="stylesheet" href="../../shared/style.css?v=18">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <div class="shg">
@@ -60,6 +60,18 @@
           </div>
         </div>
 
+        <!-- AI設定（任意） -->
+        <div class="setup-block">
+          <h2 class="setup-block__title">AI連携（任意）</h2>
+          <p class="ai-help">自分のClaude APIキーを入れると、CPUの一手やアシストがAIになるよ。未設定でもJS CPUで遊べるっ🐾（キーはこの端末のブラウザにだけ保存）</p>
+          <div class="ai-key-row">
+            <input type="password" id="ai-key-input" class="ai-key-input" placeholder="sk-ant-... を貼り付け" autocomplete="off">
+            <button class="pill-btn pill-btn--accent" id="ai-key-save">保存</button>
+            <button class="pill-btn" id="ai-key-clear">削除</button>
+          </div>
+          <p class="ai-status" id="ai-status"></p>
+        </div>
+
         <p class="setup-record" id="setup-record"></p>
 
         <button class="pill-btn pill-btn--accent btn-start" id="btn-start" disabled>対局開始</button>
@@ -109,6 +121,7 @@
         <!-- 自分キャラ（アドバイザー） -->
         <aside class="player-side player-side--self">
           <div class="assist-box" id="assist-box"></div>
+          <button class="pill-btn pill-btn--accent hint-btn" id="btn-hint" hidden>ヒントをもらう✨</button>
           <div class="shg-char">
             <span class="player-card__role">あなた</span>
             <button class="shg-char__portrait" id="char-portrait" aria-label="あなたのキャラ">
@@ -163,7 +176,8 @@
   <script src="../../shared/characters.js?v=19"></script>
   <script src="engine.js?v=1"></script>
   <script src="cpu.js?v=1"></script>
+  <script src="ai.js?v=1"></script>
   <script src="strategies.js?v=3"></script>
-  <script src="game.js?v=10"></script>
+  <script src="game.js?v=12"></script>
 </body>
 </html>

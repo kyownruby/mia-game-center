@@ -42,6 +42,9 @@ let selection = null;       // { kind:'board', r, c } | { kind:'hand', type }
 let pendingPromotion = null;// { plain, promote } 成り確認待ち
 let gameOver = false;
 let cpuThinking = false;    // CPU思考中は人間の操作をブロック
+let hintLoading = false;    // アシスト取得中
+let hintMove = null;        // AIが推奨した手（盤上ハイライト用）
+let aiComment = null;       // 直近のCPUの手に対するAIコメント（commitMoveで表示）
 
 const RECORD_KEY = 'shogi:record';
 
@@ -261,6 +264,11 @@ function renderBoard() {
       const tgt = targets.find((m) => m.to[0] === r && m.to[1] === c);
       if (tgt) cell.classList.add(piece ? 'is-capture' : 'is-target');
       if (checkSquare && checkSquare[0] === r && checkSquare[1] === c) cell.classList.add('is-check');
+      if (hintMove) {
+        const isFrom = hintMove.from && hintMove.from[0] === r && hintMove.from[1] === c;
+        const isTo = hintMove.to[0] === r && hintMove.to[1] === c;
+        if (isFrom || isTo) cell.classList.add('is-hint');
+      }
 
       if (piece) {
         const p = document.createElement('span');
@@ -340,10 +348,20 @@ function renderAssist() {
     box.innerHTML = '<span class="assist__off">アシストOFF</span>';
     return;
   }
+  const aiOn = typeof ShogiAI !== 'undefined' && ShogiAI.hasKey();
   box.innerHTML =
     `<div class="assist__title">アシスト（${strat ? strat.name : ''}）</div>` +
     `<div class="assist__body">${strat ? `「${strat.castle}」` : '囲い'}を意識して指してみてね💕<br>` +
-    `AIの推奨手は次のフェーズで届くよっ🐾</div>`;
+    (aiOn ? '「ヒントをもらう」でAIが推奨手を教えてくれるよっ🐾' : 'APIキーを設定するとAIが推奨手を出せるよっ🐾') +
+    '</div>';
+}
+
+function updateHintButton() {
+  const btn = document.getElementById('btn-hint');
+  if (!btn) return;
+  btn.hidden = !setup.assist;
+  btn.disabled = hintLoading || cpuThinking || gameOver || game.turn !== 'sente';
+  btn.textContent = hintLoading ? '考え中…🤔' : 'ヒントをもらう✨';
 }
 
 function renderAll() {
@@ -351,11 +369,41 @@ function renderAll() {
   renderHand('sente');
   renderHand('gote');
   renderTurn();
+  updateHintButton();
+}
+
+/* ---------------- AIアシスト（ヒント） ---------------- */
+async function requestHint() {
+  if (gameOver || cpuThinking || hintLoading || pendingPromotion || game.turn !== 'sente') return;
+  if (typeof ShogiAI === 'undefined' || !ShogiAI.hasKey()) {
+    messageWindow.show('APIキーを設定するとAIが推奨手を教えてくれるよっ🐾（準備画面のAI連携）');
+    return;
+  }
+  const strat = STRATEGIES.find((s) => s.id === setup.strategyId);
+  hintLoading = true;
+  updateHintButton();
+  messageWindow.show('うーん、いい手を考えるね…🤔');
+  const res = await ShogiAI.suggestMove(game, legalCache, {
+    selfName: selfChar ? selfChar.displayName : 'アドバイザー',
+    tone: selfChar ? selfChar.description : '',
+    strategyName: strat ? strat.name : '自由',
+    castle: strat ? strat.castle : '自由',
+  });
+  hintLoading = false;
+  if (gameOver) { updateHintButton(); return; }
+  if (res) {
+    hintMove = legalCache[res.moveIndex];
+    renderAll();
+    messageWindow.show(res.reason || 'この手がいいと思うっ！✨');
+  } else {
+    updateHintButton();
+    messageWindow.show('むむ、今はうまく思いつかないや…ごめんね💦');
+  }
 }
 
 /* ---------------- 操作 ---------------- */
 function onCellClick(r, c) {
-  if (gameOver || pendingPromotion || cpuThinking || game.turn !== 'sente') return;
+  if (gameOver || pendingPromotion || cpuThinking || hintLoading || game.turn !== 'sente') return;
   const piece = game.board[r][c];
 
   if (selection) {
@@ -372,7 +420,7 @@ function onCellClick(r, c) {
 }
 
 function onHandClick(owner, type) {
-  if (gameOver || pendingPromotion || cpuThinking || game.turn !== 'sente') return;
+  if (gameOver || pendingPromotion || cpuThinking || hintLoading || game.turn !== 'sente') return;
   if (owner !== game.turn) return;
   if (selection && selection.kind === 'hand' && selection.type === type) { clearSelection(); return; }
   selection = { kind: 'hand', type };
@@ -414,6 +462,7 @@ function commitMove(move) {
   const capturing = move.from && game.board[move.to[0]][move.to[1]];
   game = ShogiEngine.applyMove(game, move);
   selection = null;
+  hintMove = null;           // 着手したらヒント表示を消す
   legalCache = ShogiEngine.legalMoves(game);
   saveGame();
   renderAll();
@@ -432,12 +481,17 @@ function commitMove(move) {
       messageWindow.show(shogiLine(selfChar, 'advisor', 'praise') || (gaveCheck ? '王手っ！⚔️' : 'いいねっ✨'));
     }
   } else {
-    // CPUの手 → 相手側（ライバル）が反応
-    let scene = gaveCheck ? 'check' : (capturing ? 'capture' : 'aizuchi');
-    if (scene !== 'aizuchi' || Math.random() < 0.4) {
-      const line = shogiLine(oppChar, 'rival', scene);
-      if (line) oppMsg.show(line);
-      else if (gaveCheck) oppMsg.show('王手！');
+    // CPUの手 → 相手側（ライバル）が反応。AIコメントがあれば最優先
+    if (aiComment) {
+      oppMsg.show(aiComment);
+      aiComment = null;
+    } else {
+      let scene = gaveCheck ? 'check' : (capturing ? 'capture' : 'aizuchi');
+      if (scene !== 'aizuchi' || Math.random() < 0.4) {
+        const line = shogiLine(oppChar, 'rival', scene);
+        if (line) oppMsg.show(line);
+        else if (gaveCheck) oppMsg.show('王手！');
+      }
     }
   }
 
@@ -452,10 +506,27 @@ function scheduleCpuMove() {
   setTimeout(doCpuMove, 500);
 }
 
-function doCpuMove() {
+async function doCpuMove() {
   if (gameOver) { cpuThinking = false; return; }
-  const move = ShogiCPU.chooseMove(game, setup.difficulty);
+  let move = null;
+  aiComment = null;
+
+  // APIキーがあればAIに選ばせる（失敗時はJS CPUへフォールバック）
+  if (typeof ShogiAI !== 'undefined' && ShogiAI.hasKey()) {
+    const res = await ShogiAI.chooseMove(game, legalCache, {
+      opponentName: oppChar ? oppChar.displayName : '相手',
+      tone: oppChar ? oppChar.description : '',
+      difficulty: setup.difficulty,
+    });
+    if (res) {
+      move = legalCache[res.moveIndex];
+      aiComment = res.comment || null;
+    }
+  }
+  if (!move) move = ShogiCPU.chooseMove(game, setup.difficulty);
+
   cpuThinking = false;
+  if (gameOver) return;            // 取得中に投了/中断された場合
   if (!move) { endGame('sente', 'checkmate'); return; }
   commitMove(move);
 }
@@ -510,6 +581,35 @@ function renderSetupRecord() {
     : 'まだ対局していないよっ。最初の一局いこ〜っ🐾';
 }
 
+/* ---------------- AIキー設定 ---------------- */
+function renderAiStatus() {
+  const el = document.getElementById('ai-status');
+  if (!el || typeof ShogiAI === 'undefined') return;
+  const on = ShogiAI.hasKey();
+  el.textContent = on
+    ? `AI連携：ON（${ShogiAI.AI_MODEL}）。CPUの一手とアシストがAIになるよっ✨`
+    : 'AI連携：OFF（キー未設定）。JS CPUとセリフで遊べるよっ🐾';
+  el.classList.toggle('is-on', on);
+}
+
+function setupAiKeyControls() {
+  if (typeof ShogiAI === 'undefined') return;
+  const input = document.getElementById('ai-key-input');
+  document.getElementById('ai-key-save').addEventListener('click', () => {
+    const v = (input.value || '').trim();
+    if (!v) { alert('APIキーを入力してねっ🐾'); return; }
+    ShogiAI.setKey(v);
+    input.value = '';
+    renderAiStatus();
+    alert('APIキーを保存したよっ！この端末のブラウザだけに保存されるからねっ💕');
+  });
+  document.getElementById('ai-key-clear').addEventListener('click', () => {
+    ShogiAI.clearKey();
+    input.value = '';
+    renderAiStatus();
+  });
+}
+
 /* ---------------- セーブ / 再開 ---------------- */
 function saveGame() {
   if (gameOver) return;
@@ -540,6 +640,8 @@ function enterGameScreen() {
   oppChar = charCache[setup.opponentId] || charCache['mia'];
   gameOver = false;
   cpuThinking = false;
+  hintLoading = false;
+  hintMove = null;
   selection = null;
   pendingPromotion = null;
   legalCache = ShogiEngine.legalMoves(game);
@@ -616,6 +718,8 @@ async function init() {
   setupAssistToggle();
   updateStartButton();
   renderSetupRecord();
+  setupAiKeyControls();
+  renderAiStatus();
 
   document.getElementById('btn-start').addEventListener('click', () => {
     if (isReadyToStart()) startGame();
@@ -630,6 +734,7 @@ async function init() {
   });
   document.getElementById('btn-resign').addEventListener('click', resign);
   document.getElementById('btn-suspend').addEventListener('click', suspendGame);
+  document.getElementById('btn-hint').addEventListener('click', requestHint);
 
   // 成り確認モーダル
   document.getElementById('promote-yes').addEventListener('click', () => resolvePromotion(true));
