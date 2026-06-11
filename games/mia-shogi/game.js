@@ -396,7 +396,7 @@ async function maybeAutoHint() {
   messageWindow.show(shogiLine(selfChar, 'advisor', 'thinking') || 'うーん、考えるね…🤔');
   const res = await ShogiAI.suggestMove(game, legalCache, {
     selfName: selfChar ? selfChar.displayName : 'アドバイザー',
-    tone: selfChar ? selfChar.description : '',
+    tone: selfChar ? (selfChar.tone || selfChar.description) : '',
     strategyName: strat ? strat.name : '自由',
     castle: strat ? strat.castle : '自由',
   });
@@ -526,7 +526,7 @@ async function doCpuMove() {
   if (typeof ShogiAI !== 'undefined' && ShogiAI.hasKey()) {
     const res = await ShogiAI.chooseMove(game, legalCache, {
       opponentName: oppChar ? oppChar.displayName : '相手',
-      tone: oppChar ? oppChar.description : '',
+      tone: oppChar ? (oppChar.tone || oppChar.description) : '',
       difficulty: setup.difficulty,
     });
     if (res) {

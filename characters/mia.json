@@ -3,6 +3,7 @@
   "name": "ミア",
   "displayName": "ミア",
   "description": "猫耳メイドの受付係。明るく元気で甘えん坊。",
+  "tone": "明るく元気で甘えん坊。タメ口で、語尾は「〜だよ！」「〜だね！」「〜っ！」など。一人称は「ミア」、相手は「ご主人」と呼ぶ。🐾💕✨などの絵文字を時々使う。",
   "emoji": "🐈",
   "image": {
     "portrait": "assets/images/characters/mia_portrait.png",
