@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ミア将棋｜ミアの遊び場</title>
   <link rel="stylesheet" href="../../shared/style.css?v=18">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <div class="shg">
@@ -121,6 +121,7 @@
         <!-- 自分キャラ（アドバイザー） -->
         <aside class="player-side player-side--self">
           <div class="assist-box" id="assist-box"></div>
+          <button class="pill-btn pill-btn--accent hint-btn" id="btn-hint" hidden>ヒントをもらう✨</button>
           <div class="shg-char">
             <span class="player-card__role">あなた</span>
             <button class="shg-char__portrait" id="char-portrait" aria-label="あなたのキャラ">
@@ -177,6 +178,6 @@
   <script src="cpu.js?v=1"></script>
   <script src="ai.js?v=1"></script>
   <script src="strategies.js?v=3"></script>
-  <script src="game.js?v=11"></script>
+  <script src="game.js?v=12"></script>
 </body>
 </html>
