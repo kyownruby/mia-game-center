@@ -142,14 +142,15 @@ const STAGES = [
     ] },
 
   // 10: BOSS パソコンの基板 — エレクトリックグリーン
+  // 上侵入口（列4,9,14）から行06の横通路へ抜けるための縦穴を左右に追加
   { name: 'PC Circuit',
     palette: ['#A8E0C0', '#80D49A', '#9CD8AE', '#B4E4C8', '#88CC9C'],
     rows: [
       'XXX.XXXX.XXXX.XXXX',
       'XNXNNHNNNNNNHNNNNX',
-      'XNXXXNXXXXXXNXXXNX',
+      'XNXX.NXXXXXXNXX.NX',
       'XNNNNNNNINNNNNNNNX',
-      'XNXXXNXHXXXNNXXNXX',
+      'XNX..NXHXXXNN..NXX',
       '.NNNNNNNNINNNNNNN.',
       'XXXNXXXXXXXHXNXNXX',
       'XNNNNNNHNNNNNNNNNX',
