@@ -4,7 +4,7 @@
  */
 const Characters = (() => {
   const cache = {};
-  const ASSET_V = '25'; // キャッシュ対策バージョン（更新時に上げる）（将棋: キャラ口調toneを追加）
+  const ASSET_V = '26'; // キャッシュ対策バージョン（更新時に上げる）（将棋: tone調整 18歳の女の子/ミアの呼称修正）
 
   async function load(id, basePath = 'characters/') {
     if (cache[id]) return cache[id];
