@@ -50,6 +50,14 @@
 .pill-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 /* ============ 準備画面 ============ */
+/* .shg は 100dvh + overflow:hidden で固定なので、内容が多い準備画面だけ縦スクロール可にする
+   （準備画面と対局画面は片方ずつ表示。対局画面は縮小フィットのままで影響なし） */
+.shg-setup {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .setup-body {
   width: 100%;
   max-width: 760px;
