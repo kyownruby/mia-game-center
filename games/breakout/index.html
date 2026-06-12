@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>ブロックくずし｜ミアの遊び場</title>
-  <link rel="stylesheet" href="../../shared/style.css?v=26">
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="../../shared/style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=27">
 </head>
 <body>
   <div class="bk">
@@ -24,7 +24,7 @@
     <main class="bk-main">
       <div class="bk-canvas-area">
         <canvas id="game" width="960" height="640"></canvas>
-        <div class="bk-hint">操作: A/D または ←→ でパドル　／　Space で発射＆強打（パドル接触±0.1秒）</div>
+        <div class="bk-hint">操作: ←→ でパドル　／　Space で発射＆強打（パドル接触±0.1秒）</div>
       </div>
       <aside class="sol-char bk-side">
         <button class="sol-char__portrait" id="char-portrait" aria-label="キャラ">
@@ -78,9 +78,18 @@
     </div>
   </div>
 
-  <script src="../../shared/storage.js?v=26"></script>
-  <script src="../../shared/characters.js?v=26"></script>
-  <script src="stages.js?v=26"></script>
-  <script src="game.js?v=26"></script>
+  <!-- エディットモード用オーバーレイ（開発者向け隠し機能。初期は非表示） -->
+  <div class="bk-editor" id="bk-editor" hidden></div>
+  <!-- テストプレイ中の「編集に戻る」バー（初期は非表示） -->
+  <div class="bk-testbar" id="bk-testbar" hidden>
+    <span class="bk-testbar__label">🧪 テストプレイ中（ライフ無限）</span>
+    <button class="pill-btn pill-btn--accent" id="btn-back-edit">⏹ 編集に戻る</button>
+  </div>
+
+  <script src="../../shared/storage.js?v=27"></script>
+  <script src="../../shared/characters.js?v=27"></script>
+  <script src="stages.js?v=27"></script>
+  <script src="game.js?v=27"></script>
+  <script src="edit.js?v=27"></script>
 </body>
 </html>

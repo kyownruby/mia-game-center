@@ -145,8 +145,8 @@ function renderChar() {
 }
 
 /* ---------------- ステージ / 盤面構築 ---------------- */
-function buildStage(n) {
-  const def = STAGES[n - 1];
+function buildStage(n, defOverride) {
+  const def = defOverride || STAGES[n - 1];
   const palette = def.palette || BLOCK_COLORS.N;
   state.blocks = [];
   def.rows.forEach((row, ri) => {
@@ -523,6 +523,12 @@ function onBallLost() {
 }
 
 function onStageClear() {
+  // テストプレイ中はリザルトを出さず、同じステージを組み直して繰り返し確認できるようにする
+  if (state.testPlay) {
+    say('stage_clear');
+    setTimeout(() => { buildStage(1, state.testDef); resetBalls(); }, 700);
+    return;
+  }
   // ステージクリアボーナス
   state.score += SCORE.STAGE_BONUS;
   if (state.lifeMode !== 'inf') state.score += state.lives * SCORE.LIFE_BONUS;
@@ -740,7 +746,10 @@ function startLoop() {
 }
 
 /* ---------------- ゲーム生成 ---------------- */
-function newGame(mode, life, stage) {
+function newGame(mode, life, stage, opts) {
+  opts = opts || {};
+  state.testPlay = !!opts.testPlay;     // エディタのテストプレイ中は記録を残さない
+  state.testDef = opts.testDef || null; // テストプレイ対象のステージ定義（override）
   state.mode = mode;
   state.lifeMode = life;
   state.stage = stage || 1;
@@ -759,10 +768,10 @@ function newGame(mode, life, stage) {
   state.lastSpaceTime = 0; state.lastPaddleHitTime = 0; state.lastPaddleHitBall = null;
   state.paddleFlashUntil = 0; state.lastStrikeDialog = 0; state.floatTexts = [];
   resetPaddle();
-  buildStage(state.stage);
+  buildStage(state.stage, state.testDef);
   resetBalls();
   updateHud();
-  recordPlay(); // プレイ回数+1
+  if (!state.testPlay) recordPlay(); // プレイ回数+1（テストプレイは除外）
   say('start');
 }
 
@@ -888,6 +897,9 @@ function fmtTime(ms) {
 }
 
 /* ---------------- モーダル ---------------- */
+function anyModalOpen() {
+  return !!document.querySelector('.modal.is-visible');
+}
 function syncModalChoice() {
   document.querySelectorAll('#choice-mode .bk-opt').forEach((b) =>
     b.classList.toggle('is-active', b.dataset.mode === modalChoice.mode));
@@ -947,15 +959,21 @@ async function init() {
   document.querySelectorAll('#choice-life .bk-opt').forEach((b) =>
     b.addEventListener('click', () => { modalChoice.life = b.dataset.life; syncModalChoice(); }));
 
-  // キー入力
+  // キー入力（パドルは矢印キーのみ）
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
-    if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
+    // 隠しコマンド「EDIT」検知（モーダル表示中・エディタ起動中は無視）
+    if (window.EditMode && !window.EditMode.active && !anyModalOpen()) {
+      window.EditMode.feedKey(e.code);
+    }
+    // エディタUI表示中はゲーム操作を停止（テストプレイ中は通す）
+    if (window.EditMode && window.EditMode.gameInputBlocked()) return;
+    if (e.code === 'ArrowLeft') keys.left = true;
+    if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') { e.preventDefault(); onSpace(); }
   });
   window.addEventListener('keyup', (e) => {
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
-    if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
+    if (e.code === 'ArrowLeft') keys.left = false;
+    if (e.code === 'ArrowRight') keys.right = false;
   });
 
   // 初期セットアップ：ゆるい1ステージ目をプレビュー表示 → モーダル
