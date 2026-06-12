@@ -31,7 +31,7 @@ window.EditMode = (function () {
     paintValue: 'N',
     keySeq: [],
     dragFrom: null,
-    originalSource: null,
+    original: [],   // 起動時のステージ（差分比較の基準）
   };
 
   let root, testbar;
@@ -64,7 +64,7 @@ window.EditMode = (function () {
     };
   }
   function emptyStage(n) {
-    return { name: 'Stage' + n, palette: DEFAULT_PALETTE.slice(), rows: Array.from({ length: 7 }, () => '.'.repeat(COLS)) };
+    return { name: 'Stage' + n, palette: DEFAULT_PALETTE.slice(), rows: Array.from({ length: 7 }, () => '.'.repeat(COLS)), _oid: null };
   }
   function cur() { return ed.stages[ed.current]; }
 
@@ -74,14 +74,15 @@ window.EditMode = (function () {
     ed.active = true;
     ed.testing = false;
     if (typeof state !== 'undefined') state.ended = true; // 背景ゲームを止める
-    ed.stages = (typeof STAGES !== 'undefined' ? STAGES : []).map(normStage);
-    if (!ed.stages.length) ed.stages = [emptyStage(1)];
+    const base = (typeof STAGES !== 'undefined' ? STAGES : []).map(normStage);
+    ed.original = clone(base);                    // 差分比較の基準（_oidなし）
+    ed.stages = base.map((s, i) => { s._oid = i; return s; }); // 各ステージに元番号を付与
+    if (!ed.stages.length) { ed.stages = [emptyStage(1)]; ed.original = []; }
     ed.current = 0;
     ed.brush = 'N';
     ed.mirror = false;
     ed.undoStack = []; ed.redoStack = [];
     ed.dirty = false;
-    fetchOriginalSource();
     buildUI();
     showOverlay();
   }
@@ -150,6 +151,7 @@ window.EditMode = (function () {
   function duplicateStage(i) {
     snapshot();
     const copy = clone(ed.stages[i]);
+    copy._oid = null;            // 複製は新規ステージ扱い
     copy.name = copy.name + ' Copy';
     ed.stages.splice(i + 1, 0, copy);
     ed.current = i + 1;
@@ -206,62 +208,78 @@ window.EditMode = (function () {
     showOverlay();
   }
 
-  /* ---------------- 元ソース取得（コメント維持用） ---------------- */
-  function fetchOriginalSource() {
-    ed.originalSource = null;
-    if (typeof fetch !== 'function') return;
-    fetch('stages.js?v=27', { cache: 'no-store' })
-      .then((res) => res.text())
-      .then((txt) => { ed.originalSource = txt; })
-      .catch(() => { ed.originalSource = null; });
-  }
-  // 元ファイルのステージ順コメントを抽出し、ステージ内容→コメント の対応表を作る
-  function buildCommentMap() {
-    const map = {};
-    if (!ed.originalSource || typeof STAGES === 'undefined') return map;
-    const idx = ed.originalSource.indexOf('const STAGES');
-    const region = idx >= 0 ? ed.originalSource.slice(idx) : ed.originalSource;
-    const lines = region.split('\n');
-    const comments = [];
-    let buf = [];
-    for (const line of lines) {
-      const t = line.trim();
-      if (t.startsWith('//')) buf.push(t);
-      else if (t.startsWith('{ name:') || t.startsWith('{name:')) { comments.push(buf.join('\n  ')); buf = []; }
-    }
-    STAGES.forEach((st, i) => {
-      if (comments[i]) map[stageKey(st)] = comments[i];
-    });
-    return map;
-  }
+  /* ---------------- 差分の算出 ---------------- */
   function stageKey(st) {
     return JSON.stringify({ name: st.name, palette: st.palette, rows: normRows(st.rows) });
   }
-
-  /* ---------------- 書き出し ---------------- */
-  function buildStagesJs() {
-    const commentMap = buildCommentMap();
-    const header =
-      "'use strict';\n\n" +
-      '/* ============================================================\n' +
-      '   ブロック配置（18列固定。記号:\n' +
-      '     N=普通 / H=硬い(HP2) / h=硬い(HP3) / I=アイテム / X=消えない / .=空)\n\n' +
-      '   palette: そのステージの普通ブロック＆HP=1の硬いブロックで使う色セット\n' +
-      '   ============================================================ */\n';
-    let out = header + 'const STAGES = [\n';
-    ed.stages.forEach((raw, i) => {
-      const st = normStage(raw);
-      const comment = commentMap[stageKey(st)] || `// ${i + 1}: ${st.name}`;
-      const palette = st.palette.map((c) => `'${c}'`).join(', ');
-      out += '  ' + comment + '\n';
-      out += `  { name: '${String(st.name).replace(/'/g, "\\'")}',\n`;
-      out += `    palette: [${palette}],\n`;
-      out += '    rows: [\n';
-      st.rows.forEach((r) => { out += `      '${r}',\n`; });
-      out += '    ] },\n\n';
+  function contentOf(s) {
+    return { name: s.name, palette: s.palette.slice(), rows: normRows(s.rows) };
+  }
+  // 起動時の状態(ed.original)と現在(ed.stages)を比較し、更新/追加/削除/並べ替えを抽出
+  function buildDiff() {
+    const changes = [];
+    const presentOids = new Set(ed.stages.map((s) => s._oid).filter((o) => o != null));
+    // 削除：元にあって今ないもの
+    ed.original.forEach((o, i) => {
+      if (!presentOids.has(i)) changes.push({ op: 'delete', ref: '#' + (i + 1), origIndex: i + 1, name: o.name });
     });
-    out += '];\n';
-    return out;
+    // 更新／追加＋最終順
+    let newCounter = 0;
+    const finalOrder = [];
+    ed.stages.forEach((s) => {
+      if (s._oid == null) {
+        newCounter++;
+        const ref = 'new' + newCounter;
+        finalOrder.push(ref);
+        changes.push({ op: 'add', ref, name: s.name, stage: contentOf(s) });
+      } else {
+        const ref = '#' + (s._oid + 1);
+        finalOrder.push(ref);
+        const o = ed.original[s._oid];
+        if (o && stageKey(o) !== stageKey(s)) {
+          changes.push({ op: 'update', ref, origIndex: s._oid + 1, name: s.name, stage: contentOf(s) });
+        }
+      }
+    });
+    // 並べ替え判定：残った元ステージの並びが昇順でなければ reordered
+    const keptIdx = ed.stages.filter((s) => s._oid != null).map((s) => s._oid);
+    let reordered = false;
+    for (let i = 1; i < keptIdx.length; i++) if (keptIdx[i] < keptIdx[i - 1]) { reordered = true; break; }
+    const summary = {
+      updated: changes.filter((c) => c.op === 'update').map((c) => c.origIndex),
+      added: changes.filter((c) => c.op === 'add').map((c) => c.name),
+      deleted: changes.filter((c) => c.op === 'delete').map((c) => c.origIndex),
+      reordered,
+    };
+    return { changes, finalOrder, summary };
+  }
+
+  function timestamp() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function diffFilename() { return timestamp() + '_breakout_edit.json'; }
+
+  function buildDiffPayload() {
+    const diff = buildDiff();
+    const json = JSON.stringify({
+      type: 'breakout-stage-edit',
+      game: 'breakout',
+      target: 'games/breakout/stages.js',
+      exportedAt: new Date().toISOString(),
+      baseStageCount: ed.original.length,
+      finalStageCount: ed.stages.length,
+      summary: diff.summary,
+      changes: diff.changes,
+      finalOrder: diff.finalOrder,
+      applyInstructions:
+        'games/breakout/stages.js に適用してね。origIndex は元(1始まり)のステージ番号。' +
+        'op=update は該当ステージを stage の内容で置換、op=add は新規ステージ（stage の内容）、' +
+        'op=delete は該当ステージを削除。最終的な並び順は finalOrder（#N=元ステージ / newN=追加ステージ）に従う。' +
+        '変更のないステージは stages.js の既存内容（コメント含む）をそのまま保持してね。',
+    }, null, 2);
+    return { json, isEmpty: diff.changes.length === 0 && !diff.summary.reordered };
   }
 
   function validate() {
@@ -289,24 +307,26 @@ window.EditMode = (function () {
     return true;
   }
 
-  function downloadStages() {
+  function downloadDiff() {
+    const payload = buildDiffPayload();
+    if (payload.isEmpty) { alert('変更がないみたい🐾 何か編集してから書き出してねっ'); return; }
     if (!confirmExport()) return;
-    const text = buildStagesJs();
-    const blob = new Blob([text], { type: 'text/javascript' });
+    const blob = new Blob([payload.json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'stages.js';
+    a.href = url; a.download = diffFilename();
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     ed.dirty = false;
-    toast('stages.js を書き出したよっ🐾');
+    toast('差分JSONを書き出したよっ🐾');
   }
-  function copyStages() {
+  function copyDiff() {
+    const payload = buildDiffPayload();
+    if (payload.isEmpty) { alert('変更がないみたい🐾 何か編集してから書き出してねっ'); return; }
     if (!confirmExport()) return;
-    const text = buildStagesJs();
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(
-        () => { ed.dirty = false; toast('クリップボードにコピーしたよっ💕'); },
+      navigator.clipboard.writeText(payload.json).then(
+        () => { ed.dirty = false; toast('差分JSONをコピーしたよっ💕'); },
         () => toast('コピーに失敗したよ💦 ダウンロードを使ってね')
       );
     } else {
@@ -336,8 +356,8 @@ window.EditMode = (function () {
           '<div class="ed-sec"><div class="ed-sec__t">行数</div><div class="ed-rows"><button id="ed-rowminus">−</button><span id="ed-rowcount">7</span><button id="ed-rowplus">＋</button></div></div>' +
           '<div class="ed-sec ed-actions">' +
             '<button class="ed-btn ed-btn--play" id="ed-test">▶ テストプレイ</button>' +
-            '<button class="ed-btn ed-btn--dl" id="ed-export">⬇ stages.js を書き出し</button>' +
-            '<button class="ed-btn" id="ed-copy">📋 クリップボードにコピー</button>' +
+            '<button class="ed-btn ed-btn--dl" id="ed-export">⬇ 差分JSONを書き出し</button>' +
+            '<button class="ed-btn" id="ed-copy">📋 差分JSONをコピー</button>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -363,8 +383,8 @@ window.EditMode = (function () {
     root.querySelector('#ed-rowminus').addEventListener('click', () => setRowCount(cur().rows.length - 1));
     root.querySelector('#ed-rowplus').addEventListener('click', () => setRowCount(cur().rows.length + 1));
     root.querySelector('#ed-test').addEventListener('click', testPlay);
-    root.querySelector('#ed-export').addEventListener('click', downloadStages);
-    root.querySelector('#ed-copy').addEventListener('click', copyStages);
+    root.querySelector('#ed-export').addEventListener('click', downloadDiff);
+    root.querySelector('#ed-copy').addEventListener('click', copyDiff);
 
     // ドラッグ塗り終了
     document.addEventListener('mouseup', () => { ed.painting = false; });
