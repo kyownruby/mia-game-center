@@ -160,14 +160,13 @@
 
 /* 絵札（J/Q/K）はキャラ立ち絵を中央に */
 .card--face .card__center {
-  inset: 22px 7px;            /* 四隅の文字を避けてインセット */
+  inset: 10px 6px;            /* 上下対称インセット（垂直方向の余白をそろえる） */
 }
 .card__face-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;  /* 顔が見えるよう上寄せ */
-  border-radius: 8px;           /* 透過PNGをカード白地に自然に乗せる（枠・背景なし） */
+  object-fit: contain;          /* 全身をカード枠内に収める（足元が切れない） */
+  object-position: center;      /* 垂直方向センタリングで上下の余白を均等に */
 }
 
 .card.is-down {
