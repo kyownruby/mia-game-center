@@ -8,6 +8,14 @@ const ROOT = '../../';
 const SUITS = ['S', 'H', 'D', 'C'];
 const SUIT_SYM = { S: '♠', H: '♥', D: '♦', C: '♣' };
 const RANK_STR = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
+// 絵札（J/Q/K）のスート → キャラ立ち絵マッピング
+const FACE_CHAR = {
+  H: 'mia_portrait.png',     // ♥ ハート → ミア
+  C: 'kyown_portrait.png',   // ♣ クラブ → きょん
+  S: 'rain_portrait.png',    // ♠ スペード → レイン
+  D: 'shiori_portrait.png',  // ♦ ダイヤ → しおり
+};
+const isFace = (r) => r >= 11 && r <= 13;
 const IDLE_MS = 30000;
 
 const isRed = (c) => c.suit === 'H' || c.suit === 'D';
@@ -486,9 +494,17 @@ function makeCardEl(card) {
   el.dataset.id = card.id;
   if (!card.faceUp) { el.classList.add('is-down'); return el; }
   const r = rankStr(card.rank), s = SUIT_SYM[card.suit];
+  // 絵札（J/Q/K）は中央にキャラ立ち絵、それ以外は大きなスート記号
+  let center;
+  if (isFace(card.rank) && FACE_CHAR[card.suit]) {
+    el.classList.add('card--face');
+    center = `<div class="card__center"><img class="card__face-img" alt="" src="${ROOT}assets/images/characters/${FACE_CHAR[card.suit]}"></div>`;
+  } else {
+    center = `<div class="card__center">${s}</div>`;
+  }
   el.innerHTML =
     `<div class="card__corner card__corner--tl">${r}<span class="suit">${s}</span></div>` +
-    `<div class="card__center">${s}</div>` +
+    center +
     `<div class="card__corner card__corner--br">${r}<span class="suit">${s}</span></div>`;
   return el;
 }
