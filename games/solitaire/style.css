@@ -144,6 +144,7 @@
   font-size: 17px;
   line-height: 1;
   text-align: center;
+  z-index: 2;            /* 絵札のキャラ画像より前面に（角のランク＆スートを隠さない） */
 }
 .card__corner--tl { top: 7px; left: 8px; }
 .card__corner--br { bottom: 7px; right: 8px; transform: rotate(180deg); }
@@ -166,10 +167,7 @@
   height: 100%;
   object-fit: cover;
   object-position: top center;  /* 顔が見えるよう上寄せ */
-  border-radius: 8px;
-  border: 1.5px solid currentColor;
-  background: #FFF;
-  box-shadow: 0 1px 3px rgba(90, 74, 79, 0.25);
+  border-radius: 8px;           /* 透過PNGをカード白地に自然に乗せる（枠・背景なし） */
 }
 
 .card.is-down {
