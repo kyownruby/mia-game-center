@@ -497,8 +497,9 @@ function makeCardEl(card) {
   // 絵札（J/Q/K）は中央にキャラ立ち絵、それ以外は大きなスート記号
   let center;
   if (isFace(card.rank) && FACE_CHAR[card.suit]) {
-    el.classList.add('card--face');
-    center = `<div class="card__center"><img class="card__face-img" alt="" src="${ROOT}assets/images/characters/${FACE_CHAR[card.suit]}"></div>`;
+    // キャラ別クラス(face-<suit>)で立ち絵ごとに大きさ・足元位置を調整
+    el.classList.add('card--face', 'face-' + card.suit);
+    center = `<img class="card__face-img" alt="" src="${ROOT}assets/images/characters/${FACE_CHAR[card.suit]}">`;
   } else {
     center = `<div class="card__center">${s}</div>`;
   }
