@@ -1,0 +1,29 @@
+/* ============================================
+   トランプ絵札（J/Q/K）キャラ立ち絵 共通スタイル
+   --------------------------------------------
+   - .card__face-img …… 絵札中央のキャラ立ち絵
+   - .face-<suit> ……… 立ち絵ごとの透明余白差を吸収し、
+                        見かけ身長と足元ラインを全キャラで統一
+   - 四隅のランク＋スート記号(.card__corner)を立ち絵より前面に
+   前提: カード要素は position 指定の枠（高さ確定）で、四隅は .card__corner
+   ============================================ */
+
+/* 四隅の文字を立ち絵より前面に（隠れないように） */
+.card__corner { z-index: 2; }
+
+.card__face-img {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;                 /* 高さ基準でアスペクト維持 */
+  bottom: 8.5%;                /* 足元ライン（カード下端から） */
+  height: 81%;                 /* 既定の見かけ身長 */
+  z-index: 1;                  /* 四隅の文字(z-index:2)より背面 */
+  pointer-events: none;
+}
+
+/* キャラ別の微調整（各PNGの全身占有量の違いを吸収） */
+.face-H .card__face-img { height: 81.5%; bottom: 8.5%; }  /* ♥ ミア */
+.face-C .card__face-img { height: 82%;   bottom: 8%;   }  /* ♣ きょん */
+.face-S .card__face-img { height: 81%;   bottom: 8.5%; }  /* ♠ レイン */
+.face-D .card__face-img { height: 78.5%; bottom: 9%;   }  /* ♦ しおり */
