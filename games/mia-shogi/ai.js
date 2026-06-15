@@ -105,41 +105,79 @@
     return legalMoves.map((m, i) => `${i}: ${describeMove(state, m)}`).join('\n');
   }
 
+  /* 盤面＋手番＋両者の持ち駒から、局面を一意に表す文字列キーを作る */
+  function positionKey(state) {
+    const b = state.board.map((row) =>
+      row.map((p) => {
+        if (!p) return '..';
+        const side = p.owner === 'sente' ? 's' : 'g';
+        const prom = p.promoted ? '+' : '';
+        return side + prom + p.type;
+      }).join('')
+    ).join('/');
+    const hand = (h) => ['R', 'B', 'G', 'S', 'N', 'L', 'P'].map((t) => (h && h[t]) || 0).join(',');
+    return `${state.turn}|${b}|S:${hand(state.hands.sente)}|G:${hand(state.hands.gote)}`;
+  }
+
   /* ---------------- 純粋関数：プロンプト生成 ---------------- */
   function buildMovePrompt(state, legalMoves, opts) {
     const o = opts || {};
     const owner = state.turn === 'sente' ? '先手(▲/下側)' : '後手(△/上側)';
-    return [
+    const lines = [
       `あなたは将棋の対戦相手「${o.opponentName || 'あいて'}」です。口調・性格: ${o.tone || '自然な口調'}`,
       `あなたは${owner}。難易度: ${o.difficulty === 'easy' ? 'やさしい（甘い手も指してよい）' : 'ふつう（駒得・王手・詰みを意識）'}`,
       '盤面（▲=先手 △=後手、行0=上 行8=下）:',
       describeBoard(state),
       `あなたの持ち駒: ${describeHand(state.hands[state.turn])}`,
+    ];
+
+    // 直近の手の履歴（あれば渡す）
+    if (o.recentMoves && o.recentMoves.length) {
+      lines.push('', 'これまでの直近の手（古い→新しい）:', o.recentMoves.join('\n'));
+    }
+
+    lines.push(
       '',
       'あなたが指せる合法手リスト（この中から必ず1つだけ選ぶ）:',
       movesList(state, legalMoves),
       '',
+      '【重要な方針】',
+      '・同じ局面を繰り返す手（直前に動かした駒をすぐ元へ戻す等）は選ばない。対局を前進させること。',
+      '・駒得・玉の安全・攻めの形作りを意識し、戦略的に意味のある手を選ぶ。',
+      '',
       '次のJSON形式のみで返答してください。前置きやMarkdownのコードブロックは不要です。',
-      `{"moveIndex": <選んだ合法手の番号(0〜${legalMoves.length - 1})>, "comment": "<あなたの口調での短い一言>"}`,
-    ].join('\n');
+      `{"moveIndex": <選んだ合法手の番号(0〜${legalMoves.length - 1})>, "comment": "<あなたの口調での短い一言>"}`
+    );
+    return lines.join('\n');
   }
 
   function buildAssistPrompt(state, legalMoves, opts) {
     const o = opts || {};
-    return [
+    const lines = [
       `あなたは将棋のアドバイザー「${o.selfName || 'アドバイザー'}」です。口調・性格: ${o.tone || '自然な口調'}`,
       `プレイヤー(先手▲/下側)を応援しながら、戦法「${o.strategyName || '自由'}」（囲い: ${o.castle || '自由'}）に沿った一手を勧めます。`,
       '盤面（▲=先手 △=後手、行0=上 行8=下）:',
       describeBoard(state),
       `先手の持ち駒: ${describeHand(state.hands.sente)}`,
+    ];
+
+    // 直近の手の履歴（あれば渡す）
+    if (o.recentMoves && o.recentMoves.length) {
+      lines.push('', 'これまでの直近の手（古い→新しい）:', o.recentMoves.join('\n'));
+    }
+
+    lines.push(
       '',
       'プレイヤーが指せる合法手リスト（この中から1つ推奨する）:',
       movesList(state, legalMoves),
       '',
+      '【重要な方針】同じ局面を繰り返す手は勧めない。戦法の方針に沿って対局を前進させる手を選ぶ。',
+      '',
       '次のJSON形式のみで返答してください。前置きやMarkdownのコードブロックは不要です。',
       'reasonは必ず30文字以内・1文で、あなたの口調のまま簡潔に。',
-      `{"moveIndex": <推奨する合法手の番号(0〜${legalMoves.length - 1})>, "reason": "<30文字以内の一言アドバイス>"}`,
-    ].join('\n');
+      `{"moveIndex": <推奨する合法手の番号(0〜${legalMoves.length - 1})>, "reason": "<30文字以内の一言アドバイス>"}`
+    );
+    return lines.join('\n');
   }
 
   /* ---------------- 通信（ブラウザ） ---------------- */
@@ -200,6 +238,7 @@
     getKey, setKey, clearKey, hasKey,
     stripJsonFences, parseAiJson, validMoveIndex,
     describeBoard, describeHand, describeMove, movesList,
+    positionKey,
     buildMovePrompt, buildAssistPrompt,
     callClaude, chooseMove, suggestMove,
   };

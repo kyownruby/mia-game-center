@@ -45,6 +45,8 @@ let cpuThinking = false;    // CPU思考中は人間の操作をブロック
 let hintLoading = false;    // アシスト取得中
 let hintMove = null;        // AIが推奨した手（盤上ハイライト用）
 let aiComment = null;       // 直近のCPUの手に対するAIコメント（commitMoveで表示）
+let moveHistory = [];       // 棋譜（人間が読める文字列の配列・直近のみ保持）
+let positionCounts = {};    // 局面キー → 出現回数（千日手検出用）
 
 const RECORD_KEY = 'shogi:record';
 
@@ -399,6 +401,7 @@ async function maybeAutoHint() {
     tone: selfChar ? (selfChar.tone || selfChar.description) : '',
     strategyName: strat ? strat.name : '自由',
     castle: strat ? strat.castle : '自由',
+    recentMoves: moveHistory.slice(),   // 直近の手の履歴を渡す
   });
   hintLoading = false;
   // 取得中に着手・投了・手番変化があったら破棄
@@ -469,7 +472,22 @@ function shogiLine(ch, role, scene) {
 function commitMove(move) {
   const mover = game.turn;   // 指す側（apply前）
   const capturing = move.from && game.board[move.to[0]][move.to[1]];
+
+  // 履歴へ記録（apply前の盤面で手を文章化）
+  if (typeof ShogiAI !== 'undefined') {
+    const moverLabel = mover === 'sente' ? '▲' : '△';
+    moveHistory.push(moverLabel + ShogiAI.describeMove(game, move));
+    if (moveHistory.length > 12) moveHistory.shift();   // 直近12手だけ保持
+  }
+
   game = ShogiEngine.applyMove(game, move);
+
+  // 新しい局面の出現回数をカウント（千日手検出用）
+  if (typeof ShogiAI !== 'undefined') {
+    const key = ShogiAI.positionKey(game);
+    positionCounts[key] = (positionCounts[key] || 0) + 1;
+  }
+
   selection = null;
   hintMove = null;           // 着手したらヒント表示を消す
   legalCache = ShogiEngine.legalMoves(game);
@@ -511,6 +529,17 @@ function commitMove(move) {
 }
 
 /* ---------------- CPU ---------------- */
+/* 千日手（同一局面の繰り返し）に当たる手を除外した合法手を返す */
+function nonRepeatingMoves(state, moves) {
+  if (typeof ShogiAI === 'undefined') return moves;
+  const filtered = moves.filter((m) => {
+    const ns = ShogiEngine.applyMove(state, m);
+    const key = ShogiAI.positionKey(ns);
+    return (positionCounts[key] || 0) < 2;   // この手を指すと3回目になるなら除外
+  });
+  return filtered.length ? filtered : moves;  // 全部消えたら元のまま
+}
+
 function scheduleCpuMove() {
   cpuThinking = true;
   renderTurn();
@@ -522,19 +551,23 @@ async function doCpuMove() {
   let move = null;
   aiComment = null;
 
+  // 千日手に当たる手を除いた合法手を使う（AI・JS CPU 共通の候補リスト）
+  const candidateMoves = nonRepeatingMoves(game, legalCache);
+
   // APIキーがあればAIに選ばせる（失敗時はJS CPUへフォールバック）
   if (typeof ShogiAI !== 'undefined' && ShogiAI.hasKey()) {
-    const res = await ShogiAI.chooseMove(game, legalCache, {
+    const res = await ShogiAI.chooseMove(game, candidateMoves, {
       opponentName: oppChar ? oppChar.displayName : '相手',
       tone: oppChar ? (oppChar.tone || oppChar.description) : '',
       difficulty: setup.difficulty,
+      recentMoves: moveHistory.slice(),   // 直近の手の履歴を渡す
     });
     if (res) {
-      move = legalCache[res.moveIndex];
+      move = candidateMoves[res.moveIndex];   // AIに渡したリストから取る（ズレ防止）
       aiComment = res.comment || null;
     }
   }
-  if (!move) move = ShogiCPU.chooseMove(game, setup.difficulty);
+  if (!move) move = ShogiCPU.chooseMove(game, setup.difficulty, candidateMoves);
 
   cpuThinking = false;
   if (gameOver) return;            // 取得中に投了/中断された場合
@@ -629,6 +662,8 @@ function saveGame() {
     hands: game.hands,
     turn: game.turn,
     setup: { ...setup },
+    moveHistory: moveHistory.slice(),
+    positionCounts: { ...positionCounts },
   });
 }
 
@@ -642,6 +677,8 @@ function loadSave() {
   if (!s) return false;
   Object.assign(setup, s.setup);
   game = { board: s.board, hands: s.hands, turn: s.turn };
+  moveHistory = Array.isArray(s.moveHistory) ? s.moveHistory.slice() : [];
+  positionCounts = (s.positionCounts && typeof s.positionCounts === 'object') ? { ...s.positionCounts } : {};
   enterGameScreen();
   return true;
 }
@@ -673,6 +710,8 @@ function enterGameScreen() {
 
 function startGame() {
   game = ShogiEngine.initialState();
+  moveHistory = [];        // 前局の履歴・局面カウントを持ち越さない
+  positionCounts = {};
   enterGameScreen();
   saveGame();
   // アドバイザー（自分キャラ）の応援、相手（ライバル）のあいさつ
