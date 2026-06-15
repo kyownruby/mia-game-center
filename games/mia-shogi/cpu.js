@@ -65,8 +65,8 @@
     return best;
   }
 
-  function chooseMove(state, difficulty) {
-    const moves = E.legalMoves(state);
+  function chooseMove(state, difficulty, presetMoves) {
+    const moves = presetMoves && presetMoves.length ? presetMoves : E.legalMoves(state);
     if (!moves.length) return null;
     if (difficulty === 'easy') return chooseEasy(moves, state);
     return chooseNormal(moves, state);
