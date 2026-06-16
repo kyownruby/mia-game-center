@@ -32,9 +32,12 @@ const setup = {
   selfId: 'mia',
   opponentId: null,
   strategyId: null,
-  difficulty: 'normal',
+  mode: 'cpu',          // 'cpu' = JS CPU / 'ai' = Claude AI（要APIキー）
   assist: true,
 };
+
+/* CPU/AIどちらでも内部的に使う強さ（難易度UIは廃止し固定） */
+const CPU_LEVEL = 'normal';
 
 let game = null;            // ShogiEngine の局面 { board, hands, turn }
 let legalCache = [];        // 現在手番の合法手
@@ -194,16 +197,35 @@ function renderStrategyOptions() {
   });
 }
 
-function setupDifficultyButtons() {
-  document.querySelectorAll('[data-difficulty]').forEach((btn) => {
-    btn.classList.toggle('is-selected', btn.dataset.difficulty === setup.difficulty);
+function setupModeButtons() {
+  document.querySelectorAll('[data-mode]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      setup.difficulty = btn.dataset.difficulty;
-      document.querySelectorAll('[data-difficulty]').forEach((b) => {
-        b.classList.toggle('is-selected', b.dataset.difficulty === setup.difficulty);
-      });
+      if (btn.disabled) return;
+      setup.mode = btn.dataset.mode;
+      refreshModeButtons();
     });
   });
+  refreshModeButtons();
+}
+
+/* モードボタンの選択状態と、AIモードの有効/無効（キー有無）を更新する */
+function refreshModeButtons() {
+  const aiReady = typeof ShogiAI !== 'undefined' && ShogiAI.hasKey();
+  // キーが無いのにAIモードが選ばれていたらCPUへ戻す
+  if (setup.mode === 'ai' && !aiReady) setup.mode = 'cpu';
+
+  document.querySelectorAll('[data-mode]').forEach((b) => {
+    const isAi = b.dataset.mode === 'ai';
+    b.disabled = isAi && !aiReady;
+    b.classList.toggle('is-selected', b.dataset.mode === setup.mode && !b.disabled);
+  });
+
+  const hint = document.getElementById('mode-hint');
+  if (hint) {
+    hint.textContent = aiReady
+      ? 'AIモード：Claudeが相手をするよ✨ / CPUモード：内蔵のJS CPUと対局🐾'
+      : 'AIモードは下の「AI連携」でAPIキーを保存すると選べるよっ🐾';
+  }
 }
 
 function setupAssistToggle() {
@@ -554,12 +576,12 @@ async function doCpuMove() {
   // 千日手に当たる手を除いた合法手を使う（AI・JS CPU 共通の候補リスト）
   const candidateMoves = nonRepeatingMoves(game, legalCache);
 
-  // APIキーがあればAIに選ばせる（失敗時はJS CPUへフォールバック）
-  if (typeof ShogiAI !== 'undefined' && ShogiAI.hasKey()) {
+  // AIモードのときだけClaudeに選ばせる（失敗時はJS CPUへフォールバック）
+  if (setup.mode === 'ai' && typeof ShogiAI !== 'undefined' && ShogiAI.hasKey()) {
     const res = await ShogiAI.chooseMove(game, candidateMoves, {
       opponentName: oppChar ? oppChar.displayName : '相手',
       tone: oppChar ? (oppChar.tone || oppChar.description) : '',
-      difficulty: setup.difficulty,
+      difficulty: CPU_LEVEL,
       recentMoves: moveHistory.slice(),   // 直近の手の履歴を渡す
     });
     if (res) {
@@ -567,7 +589,7 @@ async function doCpuMove() {
       aiComment = res.comment || null;
     }
   }
-  if (!move) move = ShogiCPU.chooseMove(game, setup.difficulty, candidateMoves);
+  if (!move) move = ShogiCPU.chooseMove(game, CPU_LEVEL, candidateMoves);
 
   cpuThinking = false;
   if (gameOver) return;            // 取得中に投了/中断された場合
@@ -631,8 +653,8 @@ function renderAiStatus() {
   if (!el || typeof ShogiAI === 'undefined') return;
   const on = ShogiAI.hasKey();
   el.textContent = on
-    ? `AI連携：ON（${ShogiAI.AI_MODEL}）。CPUの一手とアシストがAIになるよっ✨`
-    : 'AI連携：OFF（キー未設定）。JS CPUとセリフで遊べるよっ🐾';
+    ? `AI連携：ON（${ShogiAI.AI_MODEL}）。AIモードとアシストが使えるよっ✨`
+    : 'AI連携：OFF（キー未設定）。CPUモードとセリフで遊べるよっ🐾';
   el.classList.toggle('is-on', on);
 }
 
@@ -645,12 +667,14 @@ function setupAiKeyControls() {
     ShogiAI.setKey(v);
     input.value = '';
     renderAiStatus();
+    refreshModeButtons();   // AIモードを選べるように更新
     alert('APIキーを保存したよっ！この端末のブラウザだけに保存されるからねっ💕');
   });
   document.getElementById('ai-key-clear').addEventListener('click', () => {
     ShogiAI.clearKey();
     input.value = '';
     renderAiStatus();
+    refreshModeButtons();   // キーが無くなったらAIモードを無効化（CPUへ戻す）
   });
 }
 
@@ -766,7 +790,7 @@ async function init() {
   renderSelfCard();
   renderOpponentOptions();
   renderStrategyOptions();
-  setupDifficultyButtons();
+  setupModeButtons();
   setupAssistToggle();
   updateStartButton();
   renderSetupRecord();

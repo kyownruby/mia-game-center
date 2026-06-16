@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ミア将棋｜ミアの遊び場</title>
   <link rel="stylesheet" href="../../shared/style.css?v=26">
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
   <div class="shg">
@@ -51,19 +51,20 @@
           <div class="strategy-list" id="strategy-list"></div>
         </div>
 
-        <!-- 難易度 -->
+        <!-- 対戦モード -->
         <div class="setup-block">
-          <h2 class="setup-block__title">難易度</h2>
+          <h2 class="setup-block__title">対戦モード</h2>
           <div class="seg">
-            <button class="seg__btn" data-difficulty="easy">やさしい</button>
-            <button class="seg__btn" data-difficulty="normal">ふつう</button>
+            <button class="seg__btn" data-mode="cpu">CPUモード</button>
+            <button class="seg__btn" data-mode="ai">AIモード</button>
           </div>
+          <p class="ai-help" id="mode-hint"></p>
         </div>
 
         <!-- AI設定（任意） -->
         <div class="setup-block">
           <h2 class="setup-block__title">AI連携（任意）</h2>
-          <p class="ai-help">自分のClaude APIキーを入れると、CPUの一手やアシストがAIになるよ。未設定でもJS CPUで遊べるっ🐾（キーはこの端末のブラウザにだけ保存）</p>
+          <p class="ai-help">自分のClaude APIキーを入れると「AIモード」とアシストが使えるよ。未設定でもCPUモードで遊べるっ🐾（キーはこの端末のブラウザにだけ保存）</p>
           <div class="ai-key-row">
             <input type="password" id="ai-key-input" class="ai-key-input" placeholder="sk-ant-... を貼り付け" autocomplete="off">
             <button class="pill-btn pill-btn--accent" id="ai-key-save">保存</button>
@@ -179,6 +180,6 @@
   <script src="cpu.js?v=27"></script>
   <script src="ai.js?v=27"></script>
   <script src="strategies.js?v=26"></script>
-  <script src="game.js?v=27"></script>
+  <script src="game.js?v=28"></script>
 </body>
 </html>
