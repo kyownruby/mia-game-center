@@ -180,6 +180,8 @@
 }
 .seg__btn:hover { transform: translateY(-2px); }
 .seg__btn.is-selected { background: var(--color-pink); color: #2A2438; }
+.seg__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.seg__btn:disabled:hover { transform: none; }
 
 /* トグル */
 .toggle { display: inline-flex; align-items: center; gap: 12px; }
