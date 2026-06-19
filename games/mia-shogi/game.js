@@ -371,7 +371,23 @@ function renderAssist() {
     box.innerHTML = '<span class="assist__off">アシストOFF</span>';
     return;
   }
-  box.innerHTML = `<div class="assist__title">アシスト：${strat ? strat.name : '自由'} / ${strat ? strat.castle : '自由'}</div>`;
+  box.innerHTML =
+    `<div class="assist__title">アシスト：${strat ? strat.name : '自由'} / ${strat ? strat.castle : '自由'}</div>` +
+    '<div class="assist__advice" id="assist-advice" hidden></div>';
+}
+
+/* ミアのアドバイスは吹き出しではなく四角いアシストボックスに表示する */
+function setMiaAdvice(text) {
+  const el = document.getElementById('assist-advice');
+  if (!el) return;
+  if (text) {
+    el.textContent = '🐈ミアのアドバイス：' + text;
+    el.hidden = false;
+  } else {
+    el.textContent = '';
+    el.hidden = true;
+  }
+  scheduleFitGame();   // 文量で高さが変わるので再フィット
 }
 
 function renderAll() {
@@ -418,7 +434,7 @@ async function maybeAutoHint() {
   // 戦略アドバイスは常にミアの口調で（立ち絵・名前は選んだ自分キャラのまま）
   const mia = charCache['mia'];
   hintLoading = true;
-  messageWindow.show(shogiLine(mia, 'advisor', 'thinking') || 'うーん、考えるね…🤔');
+  setMiaAdvice(shogiLine(mia, 'advisor', 'thinking') || 'うーん、考えるね…🤔');
   const res = await ShogiAI.suggestMove(game, legalCache, {
     selfName: mia ? mia.displayName : 'ミア',
     tone: mia ? (mia.tone || mia.description) : '',
@@ -432,7 +448,7 @@ async function maybeAutoHint() {
   if (res) {
     hintMove = legalCache[res.moveIndex];
     renderAll();
-    messageWindow.show(res.reason || 'この手がいいと思うっ！✨');
+    setMiaAdvice(res.reason || 'この手がいいと思うっ！✨');
   }
 }
 
