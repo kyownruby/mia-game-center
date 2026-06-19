@@ -146,7 +146,7 @@
       '・駒得・玉の安全・攻めの形作りを意識し、戦略的に意味のある手を選ぶ。',
       '',
       '次のJSON形式のみで返答してください。前置きやMarkdownのコードブロックは不要です。',
-      `{"moveIndex": <選んだ合法手の番号(0〜${legalMoves.length - 1})>, "comment": "<あなたの口調での短い一言>"}`
+      `{"moveIndex": <選んだ合法手の番号(0〜${legalMoves.length - 1})>}`
     );
     return lines.join('\n');
   }
