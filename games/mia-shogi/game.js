@@ -47,7 +47,6 @@ let gameOver = false;
 let cpuThinking = false;    // CPU思考中は人間の操作をブロック
 let hintLoading = false;    // アシスト取得中
 let hintMove = null;        // AIが推奨した手（盤上ハイライト用）
-let aiComment = null;       // 直近のCPUの手に対するAIコメント（commitMoveで表示）
 let moveHistory = [];       // 棋譜（人間が読める文字列の配列・直近のみ保持）
 let positionCounts = {};    // 局面キー → 出現回数（千日手検出用）
 
@@ -416,11 +415,13 @@ async function maybeAutoHint() {
   if (typeof ShogiAI === 'undefined' || !ShogiAI.hasKey()) return;
   const myId = hintReqId;
   const strat = STRATEGIES.find((s) => s.id === setup.strategyId);
+  // 戦略アドバイスは常にミアの口調で（立ち絵・名前は選んだ自分キャラのまま）
+  const mia = charCache['mia'];
   hintLoading = true;
-  messageWindow.show(shogiLine(selfChar, 'advisor', 'thinking') || 'うーん、考えるね…🤔');
+  messageWindow.show(shogiLine(mia, 'advisor', 'thinking') || 'うーん、考えるね…🤔');
   const res = await ShogiAI.suggestMove(game, legalCache, {
-    selfName: selfChar ? selfChar.displayName : 'アドバイザー',
-    tone: selfChar ? (selfChar.tone || selfChar.description) : '',
+    selfName: mia ? mia.displayName : 'ミア',
+    tone: mia ? (mia.tone || mia.description) : '',
     strategyName: strat ? strat.name : '自由',
     castle: strat ? strat.castle : '自由',
     recentMoves: moveHistory.slice(),   // 直近の手の履歴を渡す
@@ -530,17 +531,12 @@ function commitMove(move) {
       messageWindow.show(shogiLine(selfChar, 'advisor', 'praise') || (gaveCheck ? '王手っ！⚔️' : 'いいねっ✨'));
     }
   } else {
-    // CPUの手 → 相手側（ライバル）が反応。AIコメントがあれば最優先
-    if (aiComment) {
-      oppMsg.show(aiComment);
-      aiComment = null;
-    } else {
-      let scene = gaveCheck ? 'check' : (capturing ? 'capture' : 'aizuchi');
-      if (scene !== 'aizuchi' || Math.random() < 0.4) {
-        const line = shogiLine(oppChar, 'rival', scene);
-        if (line) oppMsg.show(line);
-        else if (gaveCheck) oppMsg.show('王手！');
-      }
+    // CPUの手 → 相手側（ライバル）の定型リアクションのみ（戦略コメントは廃止）
+    let scene = gaveCheck ? 'check' : (capturing ? 'capture' : 'aizuchi');
+    if (scene !== 'aizuchi' || Math.random() < 0.4) {
+      const line = shogiLine(oppChar, 'rival', scene);
+      if (line) oppMsg.show(line);
+      else if (gaveCheck) oppMsg.show('王手！');
     }
   }
 
@@ -571,7 +567,6 @@ function scheduleCpuMove() {
 async function doCpuMove() {
   if (gameOver) { cpuThinking = false; return; }
   let move = null;
-  aiComment = null;
 
   // 千日手に当たる手を除いた合法手を使う（AI・JS CPU 共通の候補リスト）
   const candidateMoves = nonRepeatingMoves(game, legalCache);
@@ -586,7 +581,6 @@ async function doCpuMove() {
     });
     if (res) {
       move = candidateMoves[res.moveIndex];   // AIに渡したリストから取る（ズレ防止）
-      aiComment = res.comment || null;
     }
   }
   if (!move) move = ShogiCPU.chooseMove(game, CPU_LEVEL, candidateMoves);
