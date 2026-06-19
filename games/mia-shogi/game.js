@@ -377,14 +377,17 @@ function renderAssist() {
 }
 
 /* ミアのアドバイスは吹き出しではなく四角いアシストボックスに表示する */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
 function setMiaAdvice(text) {
   const el = document.getElementById('assist-advice');
   if (!el) return;
   if (text) {
-    el.textContent = '🐈ミアのアドバイス：' + text;
+    el.innerHTML = '<span class="assist__advice-label">🐈ミアのアドバイス：</span>' + escapeHtml(text);
     el.hidden = false;
   } else {
-    el.textContent = '';
+    el.innerHTML = '';
     el.hidden = true;
   }
   scheduleFitGame();   // 文量で高さが変わるので再フィット

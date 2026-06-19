@@ -362,6 +362,21 @@
 }
 .player-side--opp { align-self: center; }
 
+/* 自分側：列を盤の高さまで伸ばし、アシストボックスを上端（相手の持ち駒と同じ高さ）に固定。
+   立ち絵は列の中央に置き、アドバイスが長くてもスライドしないようにする */
+.player-side--self {
+  align-self: stretch;
+  position: relative;
+  justify-content: center;
+}
+.player-side--self .assist-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 100%;
+}
+
 .player-card {
   display: flex;
   flex-direction: column;
@@ -401,6 +416,7 @@
   text-align: left;
   color: var(--color-text);
 }
+.assist__advice-label { display: block; font-weight: bold; color: var(--color-pink-deep); }
 
 .shg-char {
   display: flex;
