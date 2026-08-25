@@ -2,7 +2,8 @@ const GAMES = [
   { id: 'solitaire', name: 'ソリティア', emoji: '🃏', icon: 'assets/icons/games/solitaire.png', url: 'games/solitaire/index.html', ready: true },
   { id: 'minesweeper', name: 'マインスイーパー', emoji: '💣', icon: 'assets/icons/games/minesweeper.png', url: 'games/minesweeper/index.html', ready: true },
   { id: 'breakout', name: 'ブロックくずし', emoji: '🧱', icon: 'assets/icons/games/breakout.png', url: 'games/breakout/index.html', ready: true },
-  { id: 'mia-shogi', name: 'ミア将棋', emoji: '♟️', icon: 'assets/icons/games/mia-shogi.png', url: 'games/mia-shogi/index.html', ready: true },
+  // hidden: true でホームのタイルから除外（ゲーム本体は残しているので false/削除でいつでも復活）
+  { id: 'mia-shogi', name: 'ミア将棋', emoji: '♟️', icon: 'assets/icons/games/mia-shogi.png', url: 'games/mia-shogi/index.html', ready: true, hidden: true },
   { id: 'comingsoon', name: 'まだまだ追加予定！', emoji: '＋', ready: false, placeholder: true },
 ];
 
@@ -16,8 +17,12 @@ const chars = {};
 let selectedId = 'mia';
 let gamePage = 0;   // 現在のゲームページ（0始まり）
 
+function visibleGames() {
+  return GAMES.filter((game) => !game.hidden);   // hidden 指定のゲームはホームに出さない
+}
+
 function gamePageCount() {
-  return Math.max(1, Math.ceil(GAMES.length / GAMES_PER_PAGE));
+  return Math.max(1, Math.ceil(visibleGames().length / GAMES_PER_PAGE));
 }
 
 function speaker() {
@@ -163,7 +168,7 @@ function renderGameTiles() {
   if (gamePage > pageCount - 1) gamePage = pageCount - 1;
   if (gamePage < 0) gamePage = 0;
   const start = gamePage * GAMES_PER_PAGE;
-  GAMES.slice(start, start + GAMES_PER_PAGE).forEach((game) => {
+  visibleGames().slice(start, start + GAMES_PER_PAGE).forEach((game) => {
     const tile = document.createElement('button');
     tile.className = 'game-tile' + (game.placeholder ? ' is-placeholder' : '');
     tile.dataset.gameId = game.id;
